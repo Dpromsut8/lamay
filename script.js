@@ -51,7 +51,7 @@ window.onload = () => {
     document.getElementById("auth-wrapper").style.display = "block";
     document.getElementById("app-page").style.display = "none";
     checkAndUpdateDailyMarketPrices();
-    fixPriceLabels();
+    fixPriceAndQuantityLabels();
 };
 
 function checkAndUpdateDailyMarketPrices() {
@@ -130,18 +130,83 @@ function initApp() {
     renderButtons();
     updateGroupSelectOptions();
     updateTable();
-    fixPriceLabels();
+    fixPriceAndQuantityLabels();
     initCollapsibleAddItem();
 }
 
-function fixPriceLabels() {
-    const allElements = document.querySelectorAll('*');
-    allElements.forEach(el => {
-        if (el.children.length === 0 && (el.textContent.includes('ราคาซื้อ/ขาย') || el.id === 'unitPriceLabel')) {
-            el.innerHTML = 'ราคาซื้อ/ขาย (บาท)';
-            el.id = 'unitPriceLabel';
+function fixPriceAndQuantityLabels() {
+    const priceLabel = document.getElementById("unitPriceLabel");
+    if (priceLabel) {
+        priceLabel.innerText = 'ราคาขาย/ซื้อ';
+    } else {
+        const allElements = document.querySelectorAll('*');
+        allElements.forEach(el => {
+            if (el.children.length === 0 && (el.textContent.includes('ราคาซื้อ/ขาย') || el.id === 'unitPriceLabel')) {
+                el.innerHTML = 'ราคาขาย/ซื้อ';
+                el.id = 'unitPriceLabel';
+            }
+        });
+    }
+
+    const qtyLabel = document.getElementById("unitQtyLabel");
+    if (qtyLabel) {
+        convertToUnitSelector(qtyLabel);
+    } else {
+        const allElements = document.querySelectorAll('*');
+        allElements.forEach(el => {
+            if (el.children.length === 0 && (el.textContent.includes('จำนวน (หน่วย)') || el.textContent.trim() === 'จำนวน (หน่วย)')) {
+                convertToUnitSelector(el);
+            }
+        });
+    }
+}
+
+function convertToUnitSelector(labelEl) {
+    labelEl.id = 'unitQtyLabel';
+    const parentContainer = labelEl.parentElement;
+    if (!parentContainer) return;
+
+    if (!document.getElementById('dynamicUnitSelect')) {
+        labelEl.innerHTML = `จำนวน <select id="dynamicUnitSelect" onchange="onManualUnitChange(this.value)" style="background: #1e293b; color: #f8fafc; border: 1px solid #475569; border-radius: 4px; padding: 2px 6px; font-size: 12px; margin-left: 6px; cursor: pointer;">
+            <option value="ตัว">ตัว</option>
+            <option value="กก.">กก.</option>
+            <option value="ลูก">ลูก</option>
+            <option value="กำ">กำ</option>
+            <option value="ม้วน">ม้วน</option>
+            <option value="แผง">แผง</option>
+            <option value="กระสอบ">กระสอบ</option>
+            <option value="ซอง">ซอง</option>
+            <option value="ถุง">ถุง</option>
+            <option value="อัน">อัน</option>
+            <option value="หน่วย" selected>หน่วย</option>
+        </select>`;
+    }
+}
+
+function onManualUnitChange(selectedUnit) {
+    currentSelectedUnit = selectedUnit;
+}
+
+function updateUnitLabels(unit) {
+    currentSelectedUnit = unit || "หน่วย";
+    const unitSelect = document.getElementById("dynamicUnitSelect");
+    if (unitSelect) {
+        let found = false;
+        for (let i = 0; i < unitSelect.options.length; i++) {
+            if (unitSelect.options[i].value === currentSelectedUnit) {
+                unitSelect.selectedIndex = i;
+                found = true;
+                break;
+            }
         }
-    });
+        if (!found) {
+            const opt = document.createElement("option");
+            opt.value = currentSelectedUnit;
+            opt.innerText = currentSelectedUnit;
+            unitSelect.appendChild(opt);
+            unitSelect.value = currentSelectedUnit;
+        }
+    }
 }
 
 function initCollapsibleAddItem() {
@@ -220,18 +285,51 @@ function renderGroupContainers() {
 
     for (let groupId in farmDataStorage) {
         const title = groupTitles[groupId] || groupId.replace('-group', '');
-        const deleteGroupBtn = `<button onclick="event.stopPropagation(); deleteGroup('${groupId}')" class="danger-btn" style="padding: 3px 6px; font-size: 10px; border-radius: 4px; border: none; background: #ef4444; color: white; cursor: pointer;">ลบกลุ่ม</button>`;
 
         const groupHtml = `
             <div style="margin-top: 15px; background: #0f172a; border-radius: 10px; border: 1px solid #334155; overflow: hidden;">
-                <div onclick="toggleGroupCollapse('${groupId}')" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #1e293b; cursor: pointer; user-select: none;">
+                <div id="group-header-${groupId}" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #1e293b; cursor: pointer; user-select: none;">
                     <span style="font-weight: bold; color: #f8fafc; font-size: 15px;">📁 ${title} <span id="arrow-${groupId}" style="font-size: 12px; color: #94a3b8;">▼</span></span>
-                    ${deleteGroupBtn}
+                    <span style="font-size: 11px; color: #64748b;">(จิ้มชื่อค้าง 4 วินาทีเพื่อลบกลุ่ม)</span>
                 </div>
                 <div id="${groupId}" class="btn-group" style="display: flex; flex-wrap: wrap; gap: 8px; padding: 12px;"></div>
             </div>
         `;
         container.insertAdjacentHTML('beforeend', groupHtml);
+        
+        setTimeout(() => {
+            const headerEl = document.getElementById(`group-header-${groupId}`);
+            if (!headerEl) return;
+            
+            let groupPressTimer;
+            let isLongPress = false;
+
+            const startPress = () => {
+                isLongPress = false;
+                groupPressTimer = setTimeout(() => {
+                    isLongPress = true;
+                    deleteGroup(groupId);
+                }, 4000);
+            };
+
+            const cancelPress = () => {
+                clearTimeout(groupPressTimer);
+            };
+
+            headerEl.addEventListener('mousedown', startPress);
+            headerEl.addEventListener('mouseup', cancelPress);
+            headerEl.addEventListener('touchstart', startPress);
+            headerEl.addEventListener('touchend', cancelPress);
+            headerEl.addEventListener('touchmove', cancelPress);
+
+            headerEl.addEventListener('click', (e) => {
+                if (isLongPress) {
+                    e.stopImmediatePropagation();
+                    return;
+                }
+                toggleGroupCollapse(groupId);
+            });
+        }, 0);
     }
 }
 
@@ -282,7 +380,6 @@ function renderButtons(filter = "") {
                     const cleanName = item.name.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
                     fetchGoogleKnowledgeData(cleanName, item.name);
                     
-                    // เลื่อนหน้าจอไปที่ส่วนข้อมูล AI ด้านบนสุดเพื่อให้เห็นภาพรวม
                     const knowledgeDrawer = document.getElementById('knowledge-drawer');
                     if (knowledgeDrawer) {
                         knowledgeDrawer.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -470,7 +567,6 @@ function addEntry(type) {
     if (compareBox) compareBox.style.display = "none";
     updateUnitLabels("หน่วย");
 
-    // เลื่อนหน้าจอขึ้นไปดูรายการล่าสุดที่ด้านบน
     const knowledgeDrawer = document.getElementById('knowledge-drawer');
     if (knowledgeDrawer) {
         knowledgeDrawer.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -606,14 +702,6 @@ function displayPriceComparison(itemName, marketPrice, unit) {
     } else {
         compareBox.style.display = "none";
     }
-}
-
-function updateUnitLabels(unit) {
-    const priceLabel = document.getElementById("unitPriceLabel");
-    if (priceLabel) priceLabel.innerText = "ราคาซื้อ/ขายจริง (บาท)";
-    
-    const qtyLabel = document.getElementById("unitQtyLabel");
-    if (qtyLabel) qtyLabel.innerText = unit;
 }
 
 function getSmartEmoji(text) {
