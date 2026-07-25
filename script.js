@@ -73,16 +73,28 @@ function checkAndUpdateDailyMarketPrices() {
     }
 }
 
-function switchAuthMode(mode) {
-    const loginPage = document.getElementById("login-page");
-    const registerPage = document.getElementById("register-page");
-    if (mode === 'register') {
-        loginPage.style.display = "none";
-        registerPage.style.display = "flex";
+function switchAuthMode(mode) {function login() {
+    const nameInput = document.getElementById("loginNameInput").value.trim();
+    const passInput = document.getElementById("loginPassInput").value;
+    const savedUser = JSON.parse(localStorage.getItem('farmUser'));
+
+    // ตรวจสอบว่าเป็นผู้ใช้ที่สมัครไว้หรือไม่
+    const isValidRegisteredUser = savedUser && savedUser.name === nameInput && savedUser.pass === passInput;
+    
+    // ตรวจสอบว่าเป็น Admin หรือไม่ (บังคับให้ชื่อต้องเป็น admin และรหัสต้องเป็น Lamay@2026)
+    const isDefaultAdmin = (nameInput === "admin" && passInput === "Lamay@2026");
+
+    if (isValidRegisteredUser || isDefaultAdmin) {
+        isAdmin = true;
+        document.getElementById("auth-wrapper").style.display = "none";
+        document.getElementById("app-page").style.display = "block";
+        // แสดงชื่อผู้ใช้ หรือถ้าเป็นแอดมินให้ขึ้นว่า "ผู้ดูแลระบบ"
+        document.getElementById("displayName").innerText = isValidRegisteredUser ? savedUser.name : "ผู้ดูแลระบบ (Admin)";
+        initApp();
     } else {
-        registerPage.style.display = "none";
-        loginPage.style.display = "flex";
+        alert("ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง!");
     }
+}
 }
 
 function register() {
@@ -634,4 +646,156 @@ function openKnowledgeDrawer(title, htmlContent) {
 function closeDrawer() {
     const drawer = document.getElementById('knowledge-drawer');
     if (drawer) drawer.style.display = 'none';
+}
+function addEntry(type) {
+    const dateInput = document.getElementById("expenseDate").value;
+    const detail = document.getElementById("expenseDetail").value.trim();
+    const qty = parseFloat(document.getElementById("unitQuantity").value) || 1;
+    const price = parseFloat(document.getElementById("unitPrice").value) || 0;
+    const total = price * qty;
+
+    if (!detail || total <= 0) return alert("กรุณาระบุรายการและราคาให้ถูกต้อง");
+
+    farmData.push({
+        id: Date.now(),
+        date: dateInput,
+        detail: detail,
+        type: type,
+        amount: total
+    });
+    
+    localStorage.setItem('farmData', JSON.stringify(farmData));
+    updateTable();
+    
+    document.getElementById("expenseDetail").value = "";
+    document.getElementById("unitPrice").value = "";
+    document.getElementById("unitQuantity").value = "1";
+    calculateTotal();
+}
+
+function calculateTotal() {
+    const price = parseFloat(document.getElementById("unitPrice").value) || 0;
+    const qty = parseFloat(document.getElementById("unitQuantity").value) || 1;
+    document.getElementById("displayTotal").innerText = (price * qty).toLocaleString();
+}
+
+function displayPriceComparison(name, price, unit) {
+    const box = document.getElementById("priceCompareBox");
+    const priceDisplay = document.getElementById("marketPriceDisplay");
+    const unitDisplay = document.getElementById("marketPriceUnit");
+    
+    if (price > 0) {
+        box.style.display = "flex";
+        priceDisplay.innerText = price.toLocaleString();
+        unitDisplay.innerText = `฿/${unit}`;
+    } else {
+        box.style.display = "none";
+    }
+}
+
+function updateUnitLabels(unit) {
+    document.getElementById("unitPriceLabel").innerText = unit;
+    document.getElementById("unitQtyLabel").innerText = unit;
+}
+
+function getSmartEmoji(name) {
+    for (let key in smartMarketData) {
+        if (name.includes(key) && !name.includes(smartMarketData[key].emoji)) {
+            return smartMarketData[key].emoji + " " + name;
+        }
+    }
+    return name;
+}
+
+function fetchGoogleKnowledgeData(cleanName, fullName) {
+    const drawer = document.getElementById("knowledge-drawer");
+    const content = document.getElementById("knowledge-content");
+    const title = document.getElementById("knowledge-title");
+    
+    title.innerText = `💡 ข้อมูล: ${cleanName}`;
+    
+    let foundAI = false;
+    for (let key in smartAISummaries) {
+        if (cleanName.includes(key)) {
+            content.innerHTML = `<p>${smartAISummaries[key]}</p>`;
+            foundAI = true;
+            break;
+        }
+    }
+    if (!foundAI) {
+        content.innerHTML = `<p>ไม่พบข้อมูล AI สรุปสำหรับรายการนี้ แต่สามารถระบุราคาและจำนวนเพื่อบันทึกบัญชีได้ปกติ</p>`;
+    }
+    drawer.style.display = "block";
+}
+
+function closeDrawer() {
+    document.getElementById("knowledge-drawer").style.display = "none";
+}
+
+function updateTable() {
+    const tbody = document.getElementById("historyBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    let income = 0, expense = 0;
+
+    farmData.forEach(item => {
+        if (item.type === 'รายรับ') income += item.amount;
+        if (item.type === 'รายจ่าย') expense += item.amount;
+    });
+
+    document.getElementById("totalIncome").innerText = income.toLocaleString();
+    document.getElementById("totalExpense").innerText = expense.toLocaleString();
+    document.getElementById("netBalance").innerText = (income - expense).toLocaleString();
+    
+    const netBalanceEl = document.getElementById("netBalance");
+    netBalanceEl.style.color = (income - expense) >= 0 ? "#10b981" : "#ef4444";
+
+    // จัดเรียงรายการล่าสุดขึ้นก่อน
+    const sortedData = [...farmData].sort((a, b) => b.id - a.id);
+    const displayData = showAllHistory ? sortedData : sortedData.slice(0, 5);
+    
+    document.getElementById("historyCountText").innerText = showAllHistory ? `ทั้งหมด ${sortedData.length} รายการ` : `5 รายการล่าสุด`;
+
+    displayData.forEach(item => {
+        const tr = document.createElement("tr");
+        const color = item.type === 'รายรับ' ? '#10b981' : '#ef4444';
+        const sign = item.type === 'รายรับ' ? '+' : '-';
+        tr.innerHTML = `
+            <td style="color: #cbd5e1;">${new Date(item.date).toLocaleDateString('th-TH')}</td>
+            <td style="color: #cbd5e1;">${item.detail}</td>
+            <td style="color: ${color}; font-weight: bold;">${sign}${item.amount.toLocaleString()}</td>
+            <td><button onclick="deleteEntry(${item.id})" class="danger-btn" style="padding: 6px 12px; font-size: 12px; border-radius: 6px;">ลบ</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function toggleHistoryLimit() {
+    showAllHistory = !showAllHistory;
+    document.getElementById("toggleHistoryBtn").innerText = showAllHistory ? "ดูแค่ 5 รายการล่าสุด 📝" : "ดูประวัติทั้งหมด 📝";
+    updateTable();
+}
+
+function deleteEntry(id) {
+    if (confirm("ต้องการลบประวัติรายการนี้ใช่หรือไม่?")) {
+        farmData = farmData.filter(item => item.id !== id);
+        localStorage.setItem('farmData', JSON.stringify(farmData));
+        updateTable();
+    }
+}
+
+function clearAllData() {
+    if (confirm("⚠️ อันตราย: คุณแน่ใจหรือไม่ว่าต้องการล้างประวัติบัญชี 'ทั้งหมด'?\n(ข้อมูลที่ลบไปแล้วจะไม่สามารถกู้คืนได้)")) {
+        farmData = [];
+        localStorage.removeItem('farmData');
+        updateTable();
+        alert("ล้างข้อมูลบัญชีเรียบร้อยแล้ว");
+    }
+}
+
+function onTypeDebounce(el) {
+    clearTimeout(typingTimer);
+    if(el.id === "newItemName") {
+        // ใช้เวลาพิมพ์เสร็จในการพรีวิว Emoji (ถ้าต้องการ)
+    }
 }
