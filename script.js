@@ -817,3 +817,66 @@ function closeDrawer() {
     const drawer = document.getElementById('knowledge-drawer');
     if (drawer) drawer.style.display = 'none';
 }
+function renderButtons(filter = "") {
+    for (let groupId in farmDataStorage) {
+        let container = document.getElementById(groupId);
+        if (!container) continue;
+        container.innerHTML = "";
+
+        farmDataStorage[groupId].forEach((item, index) => {
+            if (item.name.toLowerCase().includes(filter.toLowerCase())) {
+                const btn = document.createElement("button");
+                const isLongName = item.name.length > 15;
+                
+                btn.style.cssText = `display: flex; justify-content: space-between; align-items: center; background: #1e293b; color: #cbd5e1; border: 1px solid #475569; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; width: 100%; text-align: left; gap: 6px;`;
+                btn.onmouseover = () => btn.style.borderColor = "#60a5fa";
+                btn.onmouseout = () => btn.style.borderColor = "#475569";
+                
+                btn.innerHTML = `
+                    <span class="btn-title-text" style="font-size: 12px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${item.name}</span>
+                    <span class="btn-price-badge" style="font-size: 10px; background: #334155; padding: 3px 6px; border-radius: 6px; color: #94a3b8; white-space: nowrap;">${item.marketPrice || 0} ฿/${item.unit || 'หน่วย'}</span>
+                `;
+                
+                btn.onclick = () => {
+                    const itemUnit = item.unit || "หน่วย";
+                    currentSelectedUnit = itemUnit;
+                    document.getElementById("expenseDetail").value = item.name;
+                    document.getElementById("unitPrice").value = ""; 
+                    document.getElementById("unitQuantity").value = 1;
+                    displayPriceComparison(item.name, item.marketPrice || 0, itemUnit);
+                    updateUnitLabels(itemUnit);
+                    calculateTotal();
+                };
+
+                // ห่อหุ้มด้วย wrapper พร้อมใส่ data-index สำหรับอ้างอิงตำแหน่งลาก
+                const wrapper = document.createElement("div");
+                wrapper.style.cssText = `flex: ${isLongName ? "1 1 100%" : "1 1 calc(50% - 4px)"}; cursor: grab;`;
+                wrapper.setAttribute("data-index", index);
+                
+                wrapper.appendChild(btn);
+                container.appendChild(wrapper);
+            }
+        });
+
+        // เปิดใช้งาน SortableJS สำหรับจัดเรียงด้วยการจิ้มค้างแล้วลาก
+        if (typeof Sortable !== 'undefined') {
+            Sortable.create(container, {
+                animation: 150,
+                delay: 400, // หน่วงเวลา 400ms บนมือถือ (จิ้มค้างเพื่อเริ่มลาก)
+                delayOnTouchOnly: true, // ให้หน่วงเฉพาะบนมือถือ ส่วนคอมพิวเตอร์คลิกลากได้เลย
+                touchStartThreshold: 5,
+                onEnd: function (evt) {
+                    const newOrder = [];
+                    container.querySelectorAll('[data-index]').forEach(el => {
+                        const originalIndex = parseInt(el.getAttribute('data-index'));
+                        newOrder.push(farmDataStorage[groupId][originalIndex]);
+                    });
+                    // อัปเดตข้อมูลใหม่ลงในหน่วยความจำและบันทึก
+                    farmDataStorage[groupId] = newOrder;
+                    localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
+                    renderButtons(filter); // เรนเดอร์ใหม่เพื่อให้ index ตรงกัน
+                }
+            });
+        }
+    }
+}
