@@ -51,6 +51,7 @@ window.onload = () => {
     document.getElementById("auth-wrapper").style.display = "block";
     document.getElementById("app-page").style.display = "none";
     checkAndUpdateDailyMarketPrices();
+    fixPriceLabels();
 };
 
 function checkAndUpdateDailyMarketPrices() {
@@ -73,12 +74,10 @@ function checkAndUpdateDailyMarketPrices() {
     }
 }
 
-// แก้ไขฟังก์ชันนี้ให้ทำงานได้ถูกต้อง (สลับหน้าล็อกอิน/สมัครสมาชิก)
 function switchAuthMode(mode) {
     const loginBox = document.getElementById("login-box") || document.querySelector(".login-box");
     const regBox = document.getElementById("reg-box") || document.querySelector(".reg-box");
     
-    // หากมี ID ตรงตามที่ตั้งไว้ใน HTML ให้สลับการแสดงผล
     if (mode === 'login') {
         if(loginBox) loginBox.style.display = "block";
         if(regBox) regBox.style.display = "none";
@@ -101,7 +100,6 @@ function register() {
     switchAuthMode('login');
 }
 
-// รวมฟังก์ชัน login ให้เหลืออันเดียว และตรวจสอบสิทธิ์ Admin อย่างเข้มงวด
 function login() {
     const nameInput = document.getElementById("loginNameInput").value.trim();
     const passInput = document.getElementById("loginPassInput").value;
@@ -139,10 +137,9 @@ function initApp() {
 function fixPriceLabels() {
     const allElements = document.querySelectorAll('*');
     allElements.forEach(el => {
-        if (el.children.length === 0 && el.textContent.includes('ราคาซื้อ/ขาย')) {
-            el.innerHTML = el.innerHTML.replace(/ราคาซื้อ\/ขายจริง.*?\b/g, 'ราคาซื้อ/ขาย(บาท/หน่วย)');
-            el.innerHTML = el.innerHTML.replace('ราคาซื้อ/ขายจริง (บาท/หน่วย)', 'ราคาซื้อ/ขาย(บาท/หน่วย)');
-            el.innerHTML = el.innerHTML.replace('ราคาซื้อ/ขายจริง', 'ราคาซื้อ/ขาย(บาท/หน่วย)');
+        if (el.children.length === 0 && (el.textContent.includes('ราคาซื้อ/ขาย') || el.id === 'unitPriceLabel')) {
+            el.innerHTML = 'ราคาซื้อ/ขาย (บาท)';
+            el.id = 'unitPriceLabel';
         }
     });
 }
@@ -285,9 +282,10 @@ function renderButtons(filter = "") {
                     const cleanName = item.name.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
                     fetchGoogleKnowledgeData(cleanName, item.name);
                     
-                    const accountPanel = document.querySelector('.account-panel');
-                    if (accountPanel) {
-                        accountPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // เลื่อนหน้าจอไปที่ส่วนข้อมูล AI ด้านบนสุดเพื่อให้เห็นภาพรวม
+                    const knowledgeDrawer = document.getElementById('knowledge-drawer');
+                    if (knowledgeDrawer) {
+                        knowledgeDrawer.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
                 };
 
@@ -431,14 +429,12 @@ function addNewButton() {
     document.getElementById("newGroupName").style.display = "none";
 }
 
-// ลบ addEntry ที่ซ้ำกันออกทั้งหมด และรวมให้สมบูรณ์ในฟังก์ชันเดียว
 function addEntry(type) {
     const dateInput = document.getElementById("expenseDate").value;
     const detail = document.getElementById("expenseDetail").value.trim();
     const qty = parseFloat(document.getElementById("unitQuantity").value) || 1;
     const price = parseFloat(document.getElementById("unitPrice").value) || 0;
     
-    // คำนวณราคารวม
     let total = price * qty;
     if (total === 0) {
         total = parseFloat(document.getElementById("displayTotal").innerText.replace(/,/g, '')) || 0;
@@ -446,7 +442,6 @@ function addEntry(type) {
     
     if (!dateInput || !detail || total <= 0) return alert("กรุณากรอกข้อมูลและราคาให้ครบถ้วน");
 
-    // จัดรูปแบบวันที่เป็น ว/ด/ป (ถ้าผู้ใช้ป้อนจาก input type="date")
     let formattedDate = dateInput;
     if (dateInput.includes('-')) {
         const parts = dateInput.split('-');
@@ -455,7 +450,6 @@ function addEntry(type) {
 
     const detailWithUnit = `${detail} (${qty} ${currentSelectedUnit})`;
 
-    // ใช้ ID (Date.now()) เพื่อให้ลบประวัติได้อย่างแม่นยำ
     farmData.push({ 
         id: Date.now(), 
         date: formattedDate, 
@@ -475,6 +469,12 @@ function addEntry(type) {
     const compareBox = document.getElementById("priceCompareBox");
     if (compareBox) compareBox.style.display = "none";
     updateUnitLabels("หน่วย");
+
+    // เลื่อนหน้าจอขึ้นไปดูรายการล่าสุดที่ด้านบน
+    const knowledgeDrawer = document.getElementById('knowledge-drawer');
+    if (knowledgeDrawer) {
+        knowledgeDrawer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 function calculateTotal() { 
@@ -484,12 +484,10 @@ function calculateTotal() {
     if (displayTotal) displayTotal.innerText = (p * q).toLocaleString(); 
 }
 
-// ซ่อมแซมและรวม updateTable เพื่อให้เรียงลำดับรายการและแสดง UI ได้สวยงาม
 function updateTable() {
     const historyBody = document.getElementById("historyBody");
     if (!historyBody) return;
     
-    // เติม ID ให้กับข้อมูลเก่าที่อาจจะยังไม่มี เพื่อกันข้อผิดพลาดตอนลบ
     farmData = farmData.map((item, index) => {
         if (!item.id) item.id = Date.now() + index;
         return item;
@@ -511,12 +509,11 @@ function updateTable() {
     const netBalanceEl = document.getElementById("netBalance");
     if(netBalanceEl) netBalanceEl.style.color = (income - expense) >= 0 ? "#10b981" : "#ef4444";
 
-    // เรียงประวัติจากล่าสุด (ID มากสุด) ไปหาเก่าสุด
     const sortedData = [...farmData].sort((a, b) => b.id - a.id);
     const displayData = showAllHistory ? sortedData : sortedData.slice(0, 5);
     
     const historyCountText = document.getElementById("historyCountText");
-    if (historyCountText) historyCountText.innerText = showAllHistory ? `ทั้งหมด ${sortedData.length} รายการ` : `5 รายการล่าสุด`;
+    if (historyCountText) historyCountText.innerText = showAllHistory ? `ทั้งหมด ${sortedData.length} รายการ` : `รายการล่าสุด`;
 
     displayData.forEach(item => {
         const tr = document.createElement("tr");
@@ -612,8 +609,11 @@ function displayPriceComparison(itemName, marketPrice, unit) {
 }
 
 function updateUnitLabels(unit) {
-    if (document.getElementById("unitPriceLabel")) document.getElementById("unitPriceLabel").innerText = `บาท/${unit}`;
-    if (document.getElementById("unitQtyLabel")) document.getElementById("unitQtyLabel").innerText = unit;
+    const priceLabel = document.getElementById("unitPriceLabel");
+    if (priceLabel) priceLabel.innerText = "ราคาซื้อ/ขายจริง (บาท)";
+    
+    const qtyLabel = document.getElementById("unitQtyLabel");
+    if (qtyLabel) qtyLabel.innerText = unit;
 }
 
 function getSmartEmoji(text) {
@@ -622,7 +622,7 @@ function getSmartEmoji(text) {
     for (let key in smartMarketData) {
         if (text.includes(key)) return smartMarketData[key].emoji + " " + text;
     }
-    return text; // เอาอีโมจิ 🌱 เริ่มต้นออกตามโค้ดเวอร์ชันล่าสุดของคุณ
+    return text;
 }
 
 function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
