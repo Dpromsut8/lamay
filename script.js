@@ -239,7 +239,7 @@ function updateUnitLabels(unit) {
 
 function initCollapsibleAddItem() {
     const itemNameInput = document.getElementById('newItemName');
-    if (!itemNameInput || document.getElementById('collapsible-add-box')) return;
+    if (!itemNameInput || document.getElementById('collapsible-add-header')) return;
 
     let container = itemNameInput.parentElement;
     while (container && !container.querySelector('button[onclick*="addNewButton"]')) {
@@ -250,29 +250,33 @@ function initCollapsibleAddItem() {
 
     const header = document.createElement('div');
     header.id = 'collapsible-add-header';
-    header.style.cssText = "background: #1e293b; color: #f8fafc; padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin: 10px 0; border: 1px solid #475569; user-select: none; font-size: 13px;";
-    header.innerHTML = `<span>➕ เพิ่มรายการสินค้าใหม่</span> <span id="add-collapse-arrow" style="color: #94a3b8;">▶</span>`;
+    header.style.cssText = "background: #1e293b; color: #f8fafc; padding: 12px 16px; border-radius: 12px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin: 12px 0; border: 1px solid #475569; user-select: none; font-size: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); transition: all 0.2s;";
+    header.onmouseover = () => header.style.borderColor = "#60a5fa";
+    header.onmouseout = () => header.style.borderColor = "#475569";
+    header.innerHTML = `<span>➕ เพิ่มรายการสินค้าใหม่</span> <span id="add-collapse-arrow" style="color: #94a3b8; font-size: 12px;">▼</span>`;
 
     const contentBox = document.createElement('div');
     contentBox.id = 'collapsible-add-box';
-    contentBox.style.cssText = "display: none; background: #0f172a; padding: 12px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 10px;";
+    contentBox.style.cssText = "display: none; background: #0f172a; padding: 14px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 12px;";
 
     while (container.firstChild) {
         contentBox.appendChild(container.firstChild);
     }
 
+    const parent = container.parentNode;
+    parent.insertBefore(header, container);
+    parent.insertBefore(contentBox, container);
+    container.remove();
+
     header.onclick = () => {
         if (contentBox.style.display === "none") {
             contentBox.style.display = "block";
-            document.getElementById('add-collapse-arrow').innerText = "▼";
+            document.getElementById('add-collapse-arrow').innerText = "▲";
         } else {
             contentBox.style.display = "none";
-            document.getElementById('add-collapse-arrow').innerText = "▶";
+            document.getElementById('add-collapse-arrow').innerText = "▼";
         }
     };
-
-    container.appendChild(header);
-    container.appendChild(contentBox);
 }
 
 function removeEmptyGroups() {
