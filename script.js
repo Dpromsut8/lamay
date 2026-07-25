@@ -23,7 +23,6 @@ let groupTitles = JSON.parse(localStorage.getItem('groupTitles')) || {
     "consumable-group": "วัสดุสิ้นเปลือง"
 };
 
-//  ฐานข้อมูลราคากลาง (ตลาด) อิงจากอินเทอร์เน็ต / AI
 const smartMarketData = {
     "มะกรูด": { marketPrice: 20, group: "plants-group", emoji: "🌿", unit: "ลูก" },
     "มะนาว": { marketPrice: 4, group: "plants-group", emoji: "🍋", unit: "ลูก" },
@@ -110,22 +109,41 @@ function logout() { location.reload(); }
 function initApp() {
     const expenseDateEl = document.getElementById('expenseDate');
     if (expenseDateEl) expenseDateEl.valueAsDate = new Date();
+    
+    // ตรวจสอบและเคลียร์กลุ่มที่ไม่มีสินค้าตั้งแต่เริ่มเปิดแอป
+    removeEmptyGroups();
+    
     renderGroupContainers();
     renderButtons();
     updateGroupSelectOptions();
     updateTable();
 }
 
-// ฟังก์ชันลบกลุ่มตามที่คุณต้องการ
+// ฟังก์ชันตรวจสอบและลบกลุ่มที่ไม่มีรายการสินค้า
+function removeEmptyGroups() {
+    let modified = false;
+    for (let groupId in farmDataStorage) {
+        // หากกลุ่มไม่มีสินค้าเหลืออยู่ และไม่ใช่กลุ่มตั้งต้น (หรือลบได้ทุกกลุ่มที่ว่าง)
+        if (farmDataStorage[groupId].length === 0) {
+            delete farmDataStorage[groupId];
+            delete groupTitles[groupId];
+            modified = true;
+        }
+    }
+    if (modified) {
+        localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
+        localStorage.setItem('groupTitles', JSON.stringify(groupTitles));
+    }
+}
+
 function deleteGroup(groupId) {
     if (confirm(`คุณต้องการลบกลุ่ม "${groupTitles[groupId] || groupId}" และสินค้าทั้งหมดในกลุ่มนี้ใช่หรือไม่?`)) {
         delete farmDataStorage[groupId];
-        localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
-
         if (groupTitles[groupId]) {
             delete groupTitles[groupId];
             localStorage.setItem('groupTitles', JSON.stringify(groupTitles));
         }
+        localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
 
         renderGroupContainers();
         renderButtons();
@@ -134,14 +152,14 @@ function deleteGroup(groupId) {
 }
 
 function renderGroupContainers() {
+    removeEmptyGroups(); // ตรวจสอบความเรียบร้อยก่อนเรนเดอร์
     const container = document.getElementById("groups-container");
     if (!container) return;
     container.innerHTML = "";
 
     for (let groupId in farmDataStorage) {
         const title = groupTitles[groupId] || groupId.replace('-group', '');
-        const deleteGroupBtn = groupId.startsWith('group-') ? 
-            `<button onclick="deleteGroup('${groupId}')" class="danger-btn" style="padding: 2px 6px; font-size: 11px; border-radius: 4px;">ลบกลุ่ม</button>` : '';
+        const deleteGroupBtn = `<button onclick="deleteGroup('${groupId}')" class="danger-btn" style="padding: 2px 6px; font-size: 11px; border-radius: 4px;">ลบกลุ่ม</button>`;
 
         const groupHtml = `
             <div style="margin-top: 20px;">
@@ -187,8 +205,18 @@ function renderButtons(filter = "") {
                     e.preventDefault();
                     if (confirm(`คุณต้องการลบ "${item.name}" ใช่หรือไม่?`)) {
                         farmDataStorage[groupId].splice(index, 1);
+                        
+                        // ตรวจสอบทันทีหลังลบสินค้า หากกลุ่มว่างเปล่า ให้ลบกลุ่มนั้นทิ้งอัตโนมัติ
+                        if (farmDataStorage[groupId].length === 0) {
+                            delete farmDataStorage[groupId];
+                            delete groupTitles[groupId];
+                            localStorage.setItem('groupTitles', JSON.stringify(groupTitles));
+                        }
+
                         localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
+                        renderGroupContainers();
                         renderButtons(filter);
+                        updateGroupSelectOptions();
                     }
                 };
                 container.appendChild(btn);
@@ -363,7 +391,6 @@ function clearAllData() {
     } 
 }
 
-// AI อิงราคากลาง (ตลาด) จากช่อง ระบุรายการ (Realtime Search)
 function onTypeDebounce(inputElement) {
     clearTimeout(typingTimer);
     typingTimer = setTimeout(() => {
