@@ -14,7 +14,7 @@ let farmData = JSON.parse(localStorage.getItem('farmData')) || [];
 let farmDataStorage = JSON.parse(localStorage.getItem('farmDataStorage')) || {
     "pets-group": [{name: "🐔 ไก่ไข่", marketPrice: 240, unit: "ตัว"}, {name: "🐟 ปลานิล", marketPrice: 8, unit: "ตัว"}],
     "plants-group": [{name: "🌿 มะกรูด", marketPrice: 20, unit: "ลูก"}, {name: "🍄 เห็ดนางฟ้าภูฐาน", marketPrice: 15, unit: "กก."}, {name: "🌿 ชะอม", marketPrice: 20, unit: "กำ"}],
-    "consumable-group": [{name: "🛢️ ปั๊มน้ำอินเวอร์เตอร์ 2 แรงม้า รุ่นพิเศษ", marketPrice: 2590, unit: "ตัว"}]
+    "consumable-group": [{name: "🛢️ ปั๊มน้ำอินเวอร์เตอร์ 2 แรงม้า", marketPrice: 2590, unit: "ตัว"}]
 };
 
 let groupTitles = JSON.parse(localStorage.getItem('groupTitles')) || {
@@ -128,6 +128,59 @@ function initApp() {
     renderButtons();
     updateGroupSelectOptions();
     updateTable();
+    fixPriceLabels();
+    initCollapsibleAddItem(); // ซ่อนส่วนเพิ่มรายการใหม่และทำระบบเปิด/ปิดอัตโนมัติ
+}
+
+// ปรับแก้ป้ายราคาให้เป็นบรรทัดเดียว "ราคาซื้อ/ขาย(บาท/หน่วย)"
+function fixPriceLabels() {
+    const allElements = document.querySelectorAll('*');
+    allElements.forEach(el => {
+        if (el.children.length === 0 && el.textContent.includes('ราคาซื้อ/ขาย')) {
+            el.innerHTML = el.innerHTML.replace(/ราคาซื้อ/ขายจริง.*?\b/g, 'ราคาซื้อ/ขาย(บาท/หน่วย)');
+            el.innerHTML = el.innerHTML.replace('ราคาซื้อ/ขายจริง (บาท/หน่วย)', 'ราคาซื้อ/ขาย(บาท/หน่วย)');
+            el.innerHTML = el.innerHTML.replace('ราคาซื้อ/ขายจริง', 'ราคาซื้อ/ขาย(บาท/หน่วย)');
+        }
+    });
+}
+
+// ซ่อนส่วน "เพิ่มรายการสินค้าใหม่" และทำเป็นปุ่มกดกางออก
+function initCollapsibleAddItem() {
+    const itemNameInput = document.getElementById('newItemName');
+    if (!itemNameInput || document.getElementById('collapsible-add-box')) return;
+
+    let container = itemNameInput.parentElement;
+    while (container && !container.querySelector('button[onclick*="addNewButton"]')) {
+        container = container.parentElement;
+        if (!container || container === document.body) break;
+    }
+    if (!container) container = itemNameInput.parentElement.parentElement;
+
+    const header = document.createElement('div');
+    header.id = 'collapsible-add-header';
+    header.style.cssText = "background: #1e293b; color: #f8fafc; padding: 12px 16px; border-radius: 10px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin: 15px 0; border: 1px solid #475569; user-select: none;";
+    header.innerHTML = `<span>➕ เพิ่มรายการสินค้าใหม่</span> <span id="add-collapse-arrow" style="color: #94a3b8;">▶</span>`;
+
+    const contentBox = document.createElement('div');
+    contentBox.id = 'collapsible-add-box';
+    contentBox.style.cssText = "display: none; background: #0f172a; padding: 14px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 15px;";
+
+    while (container.firstChild) {
+        contentBox.appendChild(container.firstChild);
+    }
+
+    header.onclick = () => {
+        if (contentBox.style.display === "none") {
+            contentBox.style.display = "block";
+            document.getElementById('add-collapse-arrow').innerText = "▼";
+        } else {
+            contentBox.style.display = "none";
+            document.getElementById('add-collapse-arrow').innerText = "▶";
+        }
+    };
+
+    container.appendChild(header);
+    container.appendChild(contentBox);
 }
 
 function removeEmptyGroups() {
@@ -160,7 +213,6 @@ function deleteGroup(groupId) {
     }
 }
 
-// ฟังก์ชันสร้างกลุ่ม พร้อมระบบคลิกชื่อกลุ่มเพื่อ "ย่อ/ซ่อน" รายการปุ่ม
 function renderGroupContainers() {
     removeEmptyGroups(); 
     const container = document.getElementById("groups-container");
@@ -184,7 +236,6 @@ function renderGroupContainers() {
     }
 }
 
-// ฟังก์ชันสลับซ่อน/แสดงกลุ่ม
 function toggleGroupCollapse(groupId) {
     const groupContent = document.getElementById(groupId);
     const arrow = document.getElementById(`arrow-${groupId}`);
@@ -197,7 +248,6 @@ function toggleGroupCollapse(groupId) {
     }
 }
 
-// เรนเดอร์ปุ่ม: ปรับขนาดสั้น (2 ปุ่ม/แถว) หรือ ยาวเต็มแถวตามความยาวชื่อ + รองรับจิ้มค้างแก้ไข & จิ้มค้างอัปเดตราคา
 function renderButtons(filter = "") {
     for (let groupId in farmDataStorage) {
         let container = document.getElementById(groupId);
@@ -207,8 +257,6 @@ function renderButtons(filter = "") {
         farmDataStorage[groupId].forEach((item, index) => {
             if (item.name.toLowerCase().includes(filter.toLowerCase())) {
                 const btn = document.createElement("button");
-                
-                // ตรวจสอบความยาวชื่อ เพื่อจัดสัดส่วน: ยาวเกิน 15 ตัวอักษร ให้กินพื้นที่เต็มแถว (100%), ถ้าสั้นแบ่งครึ่ง (calc(50% - 4px))
                 const isLongName = item.name.length > 15;
                 
                 btn.style.cssText = `display: flex; justify-content: space-between; align-items: center; background: #1e293b; color: #cbd5e1; border: 1px solid #475569; padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; width: 100%; text-align: left; gap: 8px;`;
@@ -220,7 +268,7 @@ function renderButtons(filter = "") {
                     <span class="btn-price-badge" style="font-size: 11px; background: #334155; padding: 4px 8px; border-radius: 6px; color: #94a3b8; white-space: nowrap;" title="จิ้มค้างเพื่ออัปเดตราคากลางใหม่">${item.marketPrice || 0} ฿/${item.unit || 'หน่วย'}</span>
                 `;
                 
-                // คลิกปกติ: เลือกรายการเพื่อบันทึกบัญชี
+                // คลิกจิ้มปุ่ม: เลือกรายการ + เลื่อนหน้าจอไปที่บัญชีฟาร์ม (ให้เห็นฟอร์มและ 2 รายการล่าสุดในหน้าจอเดียว)
                 btn.onclick = () => {
                     const itemUnit = item.unit || "หน่วย";
                     currentSelectedUnit = itemUnit;
@@ -236,24 +284,22 @@ function renderButtons(filter = "") {
                     const cleanName = item.name.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
                     fetchGoogleKnowledgeData(cleanName, item.name);
                     
-                    document.querySelector('.account-panel').scrollIntoView({ behavior: 'smooth' });
+                    const accountPanel = document.querySelector('.account-panel');
+                    if (accountPanel) {
+                        accountPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
                 };
 
-                // ระบบจิ้มค้าง (Long Press) แยกส่วน: 
-                // 1. จิ้มค้างที่ตัวชื่อ (เปิดหน้าต่างแก้ไขข้อมูลปุ่ม)
-                // 2. จิ้มค้างที่ป้ายราคา (รีเฟรชอัปเดตราคากลางทันที)
                 let pressTimer;
                 const titleSpan = btn.querySelector('.btn-title-text');
                 const priceBadge = btn.querySelector('.btn-price-badge');
 
-                // แก้ไขข้อมูลเมื่อจิ้มค้างที่ชื่อ
                 titleSpan.addEventListener('touchstart', (e) => {
                     pressTimer = setTimeout(() => openEditItemModal(groupId, index), 600);
                 });
                 titleSpan.addEventListener('touchend', () => clearTimeout(pressTimer));
                 titleSpan.oncontextmenu = (e) => { e.preventDefault(); openEditItemModal(groupId, index); };
 
-                // รีเฟรชราคาใหม่ทันทีเมื่อจิ้มค้างที่ราคา
                 priceBadge.addEventListener('touchstart', (e) => {
                     pressTimer = setTimeout(() => refreshSingleItemPrice(groupId, index), 600);
                 });
@@ -269,7 +315,6 @@ function renderButtons(filter = "") {
     }
 }
 
-// ฟังก์ชันจิ้มค้างอัปเดตราคากลางใหม่จากอินเตอร์เน็ตทันที
 function refreshSingleItemPrice(groupId, index) {
     const item = farmDataStorage[groupId][index];
     let foundNewPrice = false;
@@ -293,11 +338,10 @@ function refreshSingleItemPrice(groupId, index) {
     }
 }
 
-// หน้าต่าง popup สำหรับแก้ไขข้อมูลปุ่ม (ชื่อ, ราคา, หน่วย, ลบปุ่ม)
 function openEditItemModal(groupId, index) {
     const item = farmDataStorage[groupId][index];
     const newName = prompt(`⚙️ แก้ไขข้อมูลรายการ:\n(สามารถเปลี่ยนชื่อ โมเดล หรือรายละเอียดได้)`, item.name);
-    if (newName === null) return; // กดยกเลิก
+    if (newName === null) return;
 
     const newPrice = prompt(`💰 แก้ไขราคากลาง (บาท):`, item.marketPrice || 0);
     if (newPrice === null) return;
@@ -305,7 +349,6 @@ function openEditItemModal(groupId, index) {
     const newUnit = prompt(`📦 แก้ไขหน่วย (เช่น ตัว, กก., ลูก, อัน, กระสอบ):`, item.unit || "หน่วย");
     if (newUnit === null) return;
 
-    // อัปเดตข้อมูลพร้อมระบบใส่อิโมจิอัตโนมัติถ้ายังไม่มี
     item.name = getSmartEmoji(newName.trim());
     item.marketPrice = parseFloat(newPrice) || 0;
     item.unit = newUnit.trim() || "หน่วย";
@@ -359,7 +402,7 @@ function addNewButton() {
 
     if (!rawName) return alert("กรุณากรอกชื่อรายการ");
 
-    const name = getSmartEmoji(rawName); // ใส่อิโมจิให้อัตโนมัติ
+    const name = getSmartEmoji(rawName);
 
     if (groupVal === "new") {
         const customName = document.getElementById("newGroupName").value.trim();
@@ -417,24 +460,25 @@ function updateTable() {
     if (!historyBody) return;
     
     let reversedData = farmData.map((item, index) => ({ ...item, originalIndex: index })).reverse();
-    const displayData = showAllHistory ? reversedData : reversedData.slice(0, 5);
+    // ค่าเริ่มต้นแสดงเพียง 2 รายการล่าสุด เพื่อให้มองเห็นพอดีในหน้าจอเดียว
+    const displayData = showAllHistory ? reversedData : reversedData.slice(0, 2);
     const historyCountText = document.getElementById("historyCountText");
-    if (historyCountText) historyCountText.innerText = showAllHistory ? `ทั้งหมด ${reversedData.length} รายการ` : `5 รายการ`;
+    if (historyCountText) historyCountText.innerText = showAllHistory ? `ทั้งหมด ${reversedData.length} รายการ` : `2 รายการล่าสุด`;
 
     historyBody.innerHTML = displayData.map((obj) => `
         <tr style="border-bottom: 1px solid #334155;">
-            <td style="color: #94a3b8; font-size: 13px; padding: 10px 5px;">${obj.date}</td>
-            <td style="text-align: left; padding: 10px 5px;">
+            <td style="color: #94a3b8; font-size: 13px; padding: 8px 4px;">${obj.date}</td>
+            <td style="text-align: left; padding: 8px 4px;">
                 ${obj.detail}<br>
                 <span style="font-size: 11px; color: ${obj.type === 'รายรับ' ? '#10b981' : '#ef4444'}; font-weight: bold;">
                     ${obj.type}
                 </span>
             </td>
-            <td style="font-weight: bold; color: ${obj.type === 'รายรับ' ? '#10b981' : '#ef4444'}; padding: 10px 5px;">
+            <td style="font-weight: bold; color: ${obj.type === 'รายรับ' ? '#10b981' : '#ef4444'}; padding: 8px 4px;">
                 ${obj.total.toLocaleString()}
             </td>
-            <td style="text-align: center; padding: 10px 5px;">
-                <button onclick="deleteRecord(${obj.originalIndex})" style="padding: 4px 8px; font-size: 12px; border-radius: 4px; background: transparent; border: 1px solid #ef4444; color: #ef4444; cursor: pointer;">✖</button>
+            <td style="text-align: center; padding: 8px 4px;">
+                <button onclick="deleteRecord(${obj.originalIndex})" style="padding: 3px 6px; font-size: 11px; border-radius: 4px; background: transparent; border: 1px solid #ef4444; color: #ef4444; cursor: pointer;">✖</button>
             </td>
         </tr>
     `).join('');
@@ -528,46 +572,50 @@ function updateUnitLabels(unit) {
     if (document.getElementById("unitQtyLabel")) document.getElementById("unitQtyLabel").innerText = unit;
 }
 
-// ฟังก์ชันใส่อิโมจิอัตโนมัติอัจฉริยะ
 function getSmartEmoji(text) {
     const hasEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu.test(text); 
     if (hasEmoji) return text;
     for (let key in smartMarketData) {
         if (text.includes(key)) return smartMarketData[key].emoji + " " + text;
     }
-    return "🌱 " + text; // ถ้าไม่เจอใส่ไอโมจิเริ่มต้นให้
+    return "🌱 " + text;
 }
 
+// ตัดอิโมจิออกจากการค้นหา และเจาะจงค้นหาเรื่องการดูแลรักษา การเลี้ยงดู การบำรุง หรือวิธีใช้งานที่ถูกต้อง
 function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
-    if (!cleanItemName) return;
+    if (!rawItemName) return;
+
+    // ตัดอิโมจิและสัญลักษณ์พิเศษออกจากคำค้นหา เพื่อให้ค้นหาบน Google ได้ผลลัพธ์ที่แม่นยำ
+    const pureSearchName = rawItemName.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA70}-\u{1FAFF}]/gu, '').trim();
 
     let aiSummaryText = "ระบบกำลังรวบรวมข้อมูลแนวทางการดูแลและจัดการผลผลิตนี้ คุณสามารถค้นหาข้อมูลเชิงลึกเพิ่มเติมได้จากแหล่งข้อมูลภายนอก";
     for (let key in smartAISummaries) {
-        if (cleanItemName.includes(key)) {
+        if (pureSearchName.includes(key)) {
             aiSummaryText = smartAISummaries[key];
             break;
         }
     }
 
-    const searchQuery = encodeURIComponent(`วิธีการดูแล การเลี้ยง การปลูก ราคา ${cleanItemName}`);
+    // เจาะจงคำค้นหา: การดูแลรักษา การเลี้ยงดู การบำรุง หรือวิธีนำไปใช้งานที่ถูกต้อง
+    const searchQuery = encodeURIComponent(`การดูแลรักษา การเลี้ยงดู การบำรุง หรือวิธีนำไปใช้งานที่ถูกต้อง ${pureSearchName}`);
     const googleSearchUrl = `https://www.google.com/search?q=${searchQuery}`;
 
     const contentHtml = `
-        <div style="background: #f8fafc; border-radius: 10px; padding: 15px; margin-bottom: 15px; border: 1px solid #e2e8f0;">
-            <div style="display: flex; align-items: center; gap: 8px; color: #2563eb; font-weight: bold; margin-bottom: 10px; font-size: 15px;">
-                <span style="font-size: 18px;">✨</span> ข้อมูลภาพรวมโดย AI
+        <div style="background: #f8fafc; border-radius: 10px; padding: 12px; margin-bottom: 12px; border: 1px solid #e2e8f0;">
+            <div style="display: flex; align-items: center; gap: 8px; color: #2563eb; font-weight: bold; margin-bottom: 8px; font-size: 14px;">
+                <span style="font-size: 16px;">✨</span> ข้อมูลภาพรวมโดย AI
             </div>
-            <div style="color: #334155; font-size: 13px; line-height: 1.6;">
+            <div style="color: #334155; font-size: 12px; line-height: 1.5;">
                 ${aiSummaryText}
             </div>
         </div>
         
-        <a href="${googleSearchUrl}" target="_blank" style="display: block; text-align: center; text-decoration: none; padding: 10px; background: #ffffff; color: #3b82f6; border: 1px solid #3b82f6; border-radius: 8px; font-weight: bold; transition: 0.3s; font-size: 14px;">
+        <a href="${googleSearchUrl}" target="_blank" style="display: block; text-align: center; text-decoration: none; padding: 8px; background: #ffffff; color: #3b82f6; border: 1px solid #3b82f6; border-radius: 6px; font-weight: bold; transition: 0.3s; font-size: 13px;">
             🔍 ดูผลการค้นหาบน Google เพิ่มเติม
         </a>
     `;
 
-    openKnowledgeDrawer(`💡 แหล่งข้อมูล: ${rawItemName}`, contentHtml);
+    openKnowledgeDrawer(`💡 แหล่งข้อมูล: ${pureSearchName}`, contentHtml);
 }
 
 function openKnowledgeDrawer(title, htmlContent) {
