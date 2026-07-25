@@ -1,3 +1,5 @@
+// โค้ด Script ที่ปรับปรุงและเรียบเรียงใหม่ทั้งหมด
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
     .then(() => console.log('Service Worker Registered'))
@@ -51,7 +53,6 @@ window.onload = () => {
     document.getElementById("auth-wrapper").style.display = "block";
     document.getElementById("app-page").style.display = "none";
     checkAndUpdateDailyMarketPrices();
-    modernizeFormLayout();
 };
 
 function checkAndUpdateDailyMarketPrices() {
@@ -130,85 +131,7 @@ function initApp() {
     renderButtons();
     updateGroupSelectOptions();
     updateTable();
-    modernizeFormLayout();
     initCollapsibleAddItem();
-}
-
-function modernizeFormLayout() {
-    const priceInput = document.getElementById("unitPrice");
-    if (!priceInput) return;
-
-    let parentSection = priceInput.parentElement;
-    while (parentSection && !parentSection.querySelector('button[onclick*="รับเงิน"]') && !parentSection.querySelector('button[onclick*="addEntry"]')) {
-        parentSection = parentSection.parentElement;
-        if (!parentSection || parentSection === document.body) break;
-    }
-
-    const priceContainer = priceInput.parentElement;
-    const qtyInput = document.getElementById("unitQuantity") || document.querySelector('input[id*="Quantity"]');
-    if (!qtyInput) return;
-    const qtyContainer = qtyInput.parentElement;
-
-    const wrapperGrid = document.createElement("div");
-    wrapperGrid.id = "modern-form-grid";
-    wrapperGrid.style.cssText = "display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0;";
-
-    const priceCard = document.createElement("div");
-    priceCard.style.cssText = "background: #0f172a; padding: 8px 10px; border-radius: 8px; border: 1px solid #334155;";
-    priceCard.innerHTML = `<div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px; font-weight: 500;">ราคา</div>`;
-    priceCard.appendChild(priceInput);
-    priceInput.style.width = "100%";
-    priceInput.style.border = "none";
-    priceInput.style.background = "transparent";
-    priceInput.style.color = "#f8fafc";
-    priceInput.style.fontSize = "15px";
-    priceInput.style.fontWeight = "bold";
-
-    const qtyCard = document.createElement("div");
-    qtyCard.style.cssText = "background: #0f172a; padding: 8px 10px; border-radius: 8px; border: 1px solid #334155;";
-    
-    const unitSelectHtml = `<select id="dynamicUnitSelect" onchange="onManualUnitChange(this.value)" style="background: #1e293b; color: #f8fafc; border: 1px solid #475569; border-radius: 4px; padding: 1px 4px; font-size: 11px; float: right; cursor: pointer;">
-        <option value="ตัว">ตัว</option>
-        <option value="กก.">กก.</option>
-        <option value="ลูก">ลูก</option>
-        <option value="กำ">กำ</option>
-        <option value="ม้วน">ม้วน</option>
-        <option value="แผง">แผง</option>
-        <option value="กระสอบ">กระสอบ</option>
-        <option value="ซอง">ซอง</option>
-        <option value="ถุง">ถุง</option>
-        <option value="อัน">อัน</option>
-        <option value="หน่วย" selected>หน่วย</option>
-    </select>`;
-
-    qtyCard.innerHTML = `<div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px; font-weight: 500;">จำนวน ${unitSelectHtml}</div>`;
-    qtyCard.appendChild(qtyInput);
-    qtyInput.style.width = "100%";
-    qtyInput.style.border = "none";
-    qtyInput.style.background = "transparent";
-    qtyInput.style.color = "#f8fafc";
-    qtyInput.style.fontSize = "15px";
-    qtyInput.style.fontWeight = "bold";
-
-    wrapperGrid.appendChild(priceCard);
-    wrapperGrid.appendChild(qtyCard);
-
-    const oldPriceLabel = document.getElementById("unitPriceLabel");
-    const oldQtyLabel = document.getElementById("unitQtyLabel");
-    if (oldPriceLabel && oldPriceLabel.parentElement) oldPriceLabel.parentElement.style.display = 'none';
-    if (oldQtyLabel && oldQtyLabel.parentElement) oldQtyLabel.parentElement.style.display = 'none';
-    
-    priceContainer.style.display = 'none';
-    qtyContainer.style.display = 'none';
-
-    if (!document.getElementById("modern-form-grid")) {
-        priceContainer.parentNode.insertBefore(wrapperGrid, priceContainer);
-    }
-
-    const allButtons = document.querySelectorAll('button[onclick*="addEntry"]');
-    allButtons.forEach(btn => {
-        btn.style.cssText = "flex: 1; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 14px; border: none; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);";
-    });
 }
 
 function onManualUnitChange(selectedUnit) {
@@ -251,8 +174,6 @@ function initCollapsibleAddItem() {
     const header = document.createElement('div');
     header.id = 'collapsible-add-header';
     header.style.cssText = "background: #1e293b; color: #f8fafc; padding: 12px 16px; border-radius: 12px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin: 12px 0; border: 1px solid #475569; user-select: none; font-size: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); transition: all 0.2s;";
-    header.onmouseover = () => header.style.borderColor = "#60a5fa";
-    header.onmouseout = () => header.style.borderColor = "#475569";
     header.innerHTML = `<span>➕ เพิ่มรายการสินค้าใหม่</span> <span id="add-collapse-arrow" style="color: #94a3b8; font-size: 12px;">▼</span>`;
 
     const contentBox = document.createElement('div');
@@ -344,9 +265,7 @@ function renderGroupContainers() {
                 }, 4000);
             };
 
-            const cancelPress = () => {
-                clearTimeout(groupPressTimer);
-            };
+            const cancelPress = () => { clearTimeout(groupPressTimer); };
 
             headerEl.addEventListener('mousedown', startPress);
             headerEl.addEventListener('mouseup', cancelPress);
@@ -389,105 +308,51 @@ function renderButtons(filter = "") {
                 const isLongName = item.name.length > 15;
                 
                 btn.style.cssText = `display: flex; justify-content: space-between; align-items: center; background: #1e293b; color: #cbd5e1; border: 1px solid #475569; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; width: 100%; text-align: left; gap: 6px;`;
-                btn.onmouseover = () => btn.style.borderColor = "#60a5fa";
-                btn.onmouseout = () => btn.style.borderColor = "#475569";
                 
                 btn.innerHTML = `
                     <span class="btn-title-text" style="font-size: 12px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${item.name}</span>
-                    <span class="btn-price-badge" style="font-size: 10px; background: #334155; padding: 3px 6px; border-radius: 6px; color: #94a3b8; white-space: nowrap;" title="จิ้มค้างเพื่ออัปเดตราคากลางใหม่">${item.marketPrice || 0} ฿/${item.unit || 'หน่วย'}</span>
+                    <span class="btn-price-badge" style="font-size: 10px; background: #334155; padding: 3px 6px; border-radius: 6px; color: #94a3b8; white-space: nowrap;">${item.marketPrice || 0} ฿/${item.unit || 'หน่วย'}</span>
                 `;
                 
                 btn.onclick = () => {
                     const itemUnit = item.unit || "หน่วย";
                     currentSelectedUnit = itemUnit;
-
                     document.getElementById("expenseDetail").value = item.name;
                     document.getElementById("unitPrice").value = ""; 
                     document.getElementById("unitQuantity").value = 1;
-                    
                     displayPriceComparison(item.name, item.marketPrice || 0, itemUnit);
                     updateUnitLabels(itemUnit);
                     calculateTotal();
-                    
-                    const cleanName = item.name.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
-                    fetchGoogleKnowledgeData(cleanName, item.name);
-                    
-                    const knowledgeDrawer = document.getElementById('knowledge-drawer');
-                    if (knowledgeDrawer) {
-                        knowledgeDrawer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
                 };
 
-                let pressTimer;
-                const titleSpan = btn.querySelector('.btn-title-text');
-                const priceBadge = btn.querySelector('.btn-price-badge');
-
-                titleSpan.addEventListener('touchstart', (e) => {
-                    pressTimer = setTimeout(() => openEditItemModal(groupId, index), 600);
-                });
-                titleSpan.addEventListener('touchend', () => clearTimeout(pressTimer));
-                titleSpan.oncontextmenu = (e) => { e.preventDefault(); openEditItemModal(groupId, index); };
-
-                priceBadge.addEventListener('touchstart', (e) => {
-                    pressTimer = setTimeout(() => refreshSingleItemPrice(groupId, index), 600);
-                });
-                priceBadge.addEventListener('touchend', () => clearTimeout(pressTimer));
-                priceBadge.oncontextmenu = (e) => { e.preventDefault(); refreshSingleItemPrice(groupId, index); };
-
                 const wrapper = document.createElement("div");
-                wrapper.style.flex = isLongName ? "1 1 100%" : "1 1 calc(50% - 4px)";
+                wrapper.style.cssText = `flex: ${isLongName ? "1 1 100%" : "1 1 calc(50% - 4px)"}; cursor: grab;`;
+                wrapper.setAttribute("data-index", index);
                 wrapper.appendChild(btn);
                 container.appendChild(wrapper);
             }
         });
-    }
-}
 
-function refreshSingleItemPrice(groupId, index) {
-    const item = farmDataStorage[groupId][index];
-    let foundNewPrice = false;
-
-    for (let key in smartMarketData) {
-        if (item.name.includes(key)) {
-            item.marketPrice = smartMarketData[key].marketPrice;
-            item.unit = smartMarketData[key].unit;
-            foundNewPrice = true;
-            break;
+        if (typeof Sortable !== 'undefined') {
+            Sortable.create(container, {
+                animation: 150,
+                delay: 400,
+                delayOnTouchOnly: true,
+                touchStartThreshold: 5,
+                onEnd: function (evt) {
+                    const newOrder = [];
+                    container.querySelectorAll('[data-index]').forEach(el => {
+                        const originalIndex = parseInt(el.getAttribute('data-index'));
+                        newOrder.push(farmDataStorage[groupId][originalIndex]);
+                    });
+                    farmDataStorage[groupId] = newOrder;
+                    localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
+                    renderButtons(filter);
+                }
+            });
         }
     }
-
-    localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
-    renderButtons();
-    
-    if (foundNewPrice) {
-        alert(`🔄 อัปเดตราคากลางของ "${item.name}" เป็น ${item.marketPrice} บาท เรียบร้อยแล้ว!`);
-    } else {
-        alert(`ℹ️ ไม่พบราคากลางออนไลน์ใหม่สำหรับรายการนี้ สามารถแก้ไขราคาเองได้โดยการจิ้มค้างที่ชื่อปุ่ม`);
-    }
 }
-
-function openEditItemModal(groupId, index) {
-    const item = farmDataStorage[groupId][index];
-    const newName = prompt(`⚙️ แก้ไขข้อมูลรายการ:\n(สามารถเปลี่ยนชื่อ โมเดล หรือรายละเอียดได้)`, item.name);
-    if (newName === null) return;
-
-    const newPrice = prompt(`💰 แก้ไขราคากลาง (บาท):`, item.marketPrice || 0);
-    if (newPrice === null) return;
-
-    const newUnit = prompt(`📦 แก้ไขหน่วย (เช่น ตัว, กก., ลูก, อัน, กระสอบ):`, item.unit || "หน่วย");
-    if (newUnit === null) return;
-
-    item.name = getSmartEmoji(newName.trim());
-    item.marketPrice = parseFloat(newPrice) || 0;
-    item.unit = newUnit.trim() || "หน่วย";
-
-    localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
-    renderButtons();
-    updateGroupSelectOptions();
-    alert("✨ บันทึกการแก้ไขเรียบร้อยแล้ว!");
-}
-
-function filterButtons(query) { renderButtons(query); }
 
 function updateGroupSelectOptions() {
     const select = document.getElementById("groupSelect");
@@ -598,11 +463,6 @@ function addEntry(type) {
     const compareBox = document.getElementById("priceCompareBox");
     if (compareBox) compareBox.style.display = "none";
     updateUnitLabels("หน่วย");
-
-    const knowledgeDrawer = document.getElementById('knowledge-drawer');
-    if (knowledgeDrawer) {
-        knowledgeDrawer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
 }
 
 function calculateTotal() { 
@@ -684,43 +544,6 @@ function deleteEntry(id) {
     }
 }
 
-function clearAllData() { 
-    if (confirm("⚠️ อันตราย: คุณแน่ใจหรือไม่ว่าต้องการล้างประวัติบัญชี 'ทั้งหมด'?\n(ข้อมูลที่ลบไปแล้วจะไม่สามารถกู้คืนได้)")) { 
-        farmData = [];
-        localStorage.removeItem('farmData');
-        updateTable();
-        alert("ล้างข้อมูลบัญชีเรียบร้อยแล้ว"); 
-    } 
-}
-
-function onTypeDebounce(inputElement) {
-    clearTimeout(typingTimer);
-    typingTimer = setTimeout(() => {
-        const query = inputElement.value.trim();
-        if (query.length >= 1) handleRealtimeSearch(query);
-    }, DEBOUNCE_DELAY);
-}
-
-function handleRealtimeSearch(query) {
-    const cleanName = query.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
-    
-    let matchedData = null;
-    for (let key in smartMarketData) {
-        if (cleanName.includes(key)) {
-            matchedData = smartMarketData[key];
-            break;
-        }
-    }
-
-    const currentMarketPrice = matchedData ? matchedData.marketPrice : 0;
-    const matchedUnit = matchedData ? matchedData.unit : "หน่วย";
-    
-    currentSelectedUnit = matchedUnit;
-    updateUnitLabels(matchedUnit);
-    displayPriceComparison(query, currentMarketPrice, matchedUnit);
-    fetchGoogleKnowledgeData(cleanName, query);
-}
-
 function displayPriceComparison(itemName, marketPrice, unit) {
     const compareBox = document.getElementById("priceCompareBox");
     if (!compareBox) return;
@@ -743,140 +566,4 @@ function getSmartEmoji(text) {
         if (text.includes(key)) return smartMarketData[key].emoji + " " + text;
     }
     return text;
-}
-
-async function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
-    if (!rawItemName) return;
-
-    const pureSearchName = rawItemName.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA70}-\u{1FAFF}]/gu, '').trim();
-
-    let aiSummaryText = "";
-    let foundAI = false;
-    
-    for (let key in smartAISummaries) {
-        if (pureSearchName.includes(key)) {
-            aiSummaryText = smartAISummaries[key];
-            foundAI = true;
-            break;
-        }
-    }
-
-    const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`การดูแลรักษา การเลี้ยงดู การบำรุง หรือวิธีนำไปใช้งานที่ถูกต้อง ${pureSearchName}`)}`;
-
-    openKnowledgeDrawer(`💡 ข้อมูล: ${pureSearchName}`, `
-        <div style="background: #1e293b; border-radius: 10px; padding: 10px; margin-bottom: 10px; border: 1px solid #334155; color: #f8fafc;">
-            <div style="display: flex; align-items: center; gap: 6px; color: #60a5fa; font-weight: bold; margin-bottom: 6px; font-size: 13px;">
-                <span style="font-size: 15px;">✨</span> ข้อมูลภาพรวมโดย AI / Wikipedia
-            </div>
-            <div id="wiki-summary-content" style="color: #cbd5e1; font-size: 11px; line-height: 1.4;">
-                ${foundAI ? aiSummaryText : 'กำลังดึงข้อมูลจาก Wikipedia...'}
-            </div>
-        </div>
-        
-        <a href="${googleSearchUrl}" target="_blank" style="display: block; text-align: center; text-decoration: none; padding: 8px; background: #1e293b; color: #60a5fa; border: 1px solid #475569; border-radius: 8px; font-weight: bold; transition: 0.3s; font-size: 12px;">
-            🔍 ดูผลการค้นหาบน Google เพิ่มเติม
-        </a>
-    `);
-
-    if (!foundAI) {
-        try {
-            const response = await fetch(`https://th.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pureSearchName)}`);
-            if (response.ok) {
-                const data = await response.json();
-                const wikiElem = document.getElementById('wiki-summary-content');
-                if (data && data.extract && wikiElem) {
-                    wikiElem.innerHTML = `${data.extract} <br><br><span style="font-size:10px; color:#94a3b8;">(ที่มา: Wikipedia)</span>`;
-                } else if (wikiElem) {
-                    wikiElem.innerHTML = "ไม่พบข้อมูลสรุปจาก Wikipedia แต่สามารถระบุราคาและจำนวนเพื่อบันทึกบัญชีได้ปกติ";
-                }
-            } else {
-                const wikiElem = document.getElementById('wiki-summary-content');
-                if (wikiElem) wikiElem.innerHTML = "ไม่พบข้อมูลสรุปสำหรับรายการนี้ แต่สามารถระบุราคาและจำนวนเพื่อบันทึกบัญชีได้ปกติ";
-            }
-        } catch (error) {
-            const wikiElem = document.getElementById('wiki-summary-content');
-            if (wikiElem) wikiElem.innerHTML = "ไม่พบข้อมูลสรุปสำหรับรายการนี้ แต่สามารถระบุราคาและจำนวนเพื่อบันทึกบัญชีได้ปกติ";
-        }
-    }
-}
-
-function openKnowledgeDrawer(title, htmlContent) {
-    const drawer = document.getElementById('knowledge-drawer');
-    if (!drawer) return;
-    
-    const titleElement = document.getElementById('knowledge-title');
-    const infoElement = document.getElementById('knowledge-content');
-    
-    if (titleElement) titleElement.textContent = title;
-    if (infoElement) infoElement.innerHTML = htmlContent;
-    
-    drawer.style.display = 'block';
-}
-
-function closeDrawer() {
-    const drawer = document.getElementById('knowledge-drawer');
-    if (drawer) drawer.style.display = 'none';
-}
-function renderButtons(filter = "") {
-    for (let groupId in farmDataStorage) {
-        let container = document.getElementById(groupId);
-        if (!container) continue;
-        container.innerHTML = "";
-
-        farmDataStorage[groupId].forEach((item, index) => {
-            if (item.name.toLowerCase().includes(filter.toLowerCase())) {
-                const btn = document.createElement("button");
-                const isLongName = item.name.length > 15;
-                
-                btn.style.cssText = `display: flex; justify-content: space-between; align-items: center; background: #1e293b; color: #cbd5e1; border: 1px solid #475569; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; width: 100%; text-align: left; gap: 6px;`;
-                btn.onmouseover = () => btn.style.borderColor = "#60a5fa";
-                btn.onmouseout = () => btn.style.borderColor = "#475569";
-                
-                btn.innerHTML = `
-                    <span class="btn-title-text" style="font-size: 12px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${item.name}</span>
-                    <span class="btn-price-badge" style="font-size: 10px; background: #334155; padding: 3px 6px; border-radius: 6px; color: #94a3b8; white-space: nowrap;">${item.marketPrice || 0} ฿/${item.unit || 'หน่วย'}</span>
-                `;
-                
-                btn.onclick = () => {
-                    const itemUnit = item.unit || "หน่วย";
-                    currentSelectedUnit = itemUnit;
-                    document.getElementById("expenseDetail").value = item.name;
-                    document.getElementById("unitPrice").value = ""; 
-                    document.getElementById("unitQuantity").value = 1;
-                    displayPriceComparison(item.name, item.marketPrice || 0, itemUnit);
-                    updateUnitLabels(itemUnit);
-                    calculateTotal();
-                };
-
-                // ห่อหุ้มด้วย wrapper พร้อมใส่ data-index สำหรับอ้างอิงตำแหน่งลาก
-                const wrapper = document.createElement("div");
-                wrapper.style.cssText = `flex: ${isLongName ? "1 1 100%" : "1 1 calc(50% - 4px)"}; cursor: grab;`;
-                wrapper.setAttribute("data-index", index);
-                
-                wrapper.appendChild(btn);
-                container.appendChild(wrapper);
-            }
-        });
-
-        // เปิดใช้งาน SortableJS สำหรับจัดเรียงด้วยการจิ้มค้างแล้วลาก
-        if (typeof Sortable !== 'undefined') {
-            Sortable.create(container, {
-                animation: 150,
-                delay: 400, // หน่วงเวลา 400ms บนมือถือ (จิ้มค้างเพื่อเริ่มลาก)
-                delayOnTouchOnly: true, // ให้หน่วงเฉพาะบนมือถือ ส่วนคอมพิวเตอร์คลิกลากได้เลย
-                touchStartThreshold: 5,
-                onEnd: function (evt) {
-                    const newOrder = [];
-                    container.querySelectorAll('[data-index]').forEach(el => {
-                        const originalIndex = parseInt(el.getAttribute('data-index'));
-                        newOrder.push(farmDataStorage[groupId][originalIndex]);
-                    });
-                    // อัปเดตข้อมูลใหม่ลงในหน่วยความจำและบันทึก
-                    farmDataStorage[groupId] = newOrder;
-                    localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
-                    renderButtons(filter); // เรนเดอร์ใหม่เพื่อให้ index ตรงกัน
-                }
-            });
-        }
-    }
 }

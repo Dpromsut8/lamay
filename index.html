@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ละม้ายฟาร์ม - แพลตฟอร์มจัดการผลผลิต</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
-    <style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-
-        /* สไตล์เพิ่มเติมเพื่อให้ช่องกรอกข้อมูลเหมือนแบบฟอร์มในรูป */
+    <style>
+        /* สไตล์เพิ่มเติมเพื่อให้ช่องกรอกข้อมูลสวยงามและเข้ากับธีม */
         .platform-input {
             width: 100%;
             padding: 12px;
@@ -142,9 +141,7 @@
                         <h3 id="knowledge-title" style="margin: 0; color: #e2e8f0; font-size: 16px;">ข้อมูลรายการ</h3>
                         <button onclick="closeDrawer()" class="close-icon-btn" style="background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer;">✖</button>
                     </div>
-                    <div id="knowledge-content" class="knowledge-content" style="color: #cbd5e1; font-size: 14px; line-height: 1.5;">
-                        <!-- ข้อมูลและปุ่มค้นหา Google จะมาแสดงที่นี่ -->
-                    </div>
+                    <div id="knowledge-content" class="knowledge-content" style="color: #cbd5e1; font-size: 14px; line-height: 1.5;"></div>
                 </div>
 
                 <!-- 3. ฟอร์มบันทึกรายการ -->
@@ -157,15 +154,39 @@
                         <span style="font-size: 14px;">📊 ราคากลาง (ตลาด): <strong id="marketPriceDisplay" style="color: #60a5fa;">0</strong> <span id="marketPriceUnit" style="font-size: 12px; color: #94a3b8;">฿</span></span>
                     </div>
 
-                    <!-- ส่วนฟอร์ม ราคา และ จำนวน ตามแบบเป๊ะๆ -->
+                    <!-- ส่วนฟอร์ม ราคา และ จำนวน (พร้อมลักษณนามตามต้องการ) -->
                     <div style="display: flex; gap: 12px; margin-bottom: 15px;">
-                        <div style="flex: 1;">
-                            <label class="platform-label">ราคาซื้อ/ขายจริง (<span id="unitPriceLabel">บาท</span>)</label>
-                            <input type="number" id="unitPrice" class="platform-input" placeholder="0" oninput="calculateTotal()">
+                        <!-- ช่อง ราคา -->
+                        <div style="flex: 1; background: #0f172a; padding: 8px 10px; border-radius: 8px; border: 1px solid #334155;">
+                            <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px; font-weight: 500;">ราคา</div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <input type="number" id="unitPrice" placeholder="0" oninput="calculateTotal()" style="width: 100%; border: none; background: transparent; color: #f8fafc; font-size: 15px; font-weight: bold; outline: none;">
+                                <span id="unitPriceLabel" style="font-size: 12px; color: #94a3b8; white-space: nowrap;">บาท</span>
+                            </div>
                         </div>
-                        <div style="flex: 1;">
-                            <label class="platform-label">จำนวน (<span id="unitQtyLabel">หน่วย</span>)</label>
-                            <input type="number" id="unitQuantity" class="platform-input" placeholder="1" value="1" oninput="calculateTotal()">
+
+                        <!-- ช่อง จำนวน (ลักษณนาม) -->
+                        <div style="flex: 1; background: #0f172a; padding: 8px 10px; border-radius: 8px; border: 1px solid #334155;">
+                            <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px; font-weight: 500; display: flex; justify-content: space-between; align-items: center;">
+                                <span>จำนวน</span>
+                                <select id="dynamicUnitSelect" onchange="onManualUnitChange(this.value)" style="background: #1e293b; color: #f8fafc; border: 1px solid #475569; border-radius: 4px; padding: 1px 4px; font-size: 11px; cursor: pointer;">
+                                    <option value="ตัว">ตัว</option>
+                                    <option value="กก.">กก.</option>
+                                    <option value="ลูก">ลูก</option>
+                                    <option value="กำ">กำ</option>
+                                    <option value="ม้วน">ม้วน</option>
+                                    <option value="แผง">แผง</option>
+                                    <option value="กระสอบ">กระสอบ</option>
+                                    <option value="ซอง">ซอง</option>
+                                    <option value="ถุง">ถุง</option>
+                                    <option value="อัน">อัน</option>
+                                    <option value="หน่วย" selected>หน่วย</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <input type="number" id="unitQuantity" placeholder="1" value="1" oninput="calculateTotal()" style="width: 100%; border: none; background: transparent; color: #f8fafc; font-size: 15px; font-weight: bold; outline: none;">
+                                <span id="unitQtyLabel" style="font-size: 12px; color: #94a3b8; display: none;">ลักษณนาม</span>
+                            </div>
                         </div>
                     </div>
 
