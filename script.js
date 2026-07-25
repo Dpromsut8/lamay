@@ -23,7 +23,7 @@ let groupTitles = JSON.parse(localStorage.getItem('groupTitles')) || {
     "consumable-group": "วัสดุสิ้นเปลือง"
 };
 
-// ฐานข้อมูลราคากลาง (ตลาด) อิงจากอินเทอร์เน็ต / AI
+//  ฐานข้อมูลราคากลาง (ตลาด) อิงจากอินเทอร์เน็ต / AI
 const smartMarketData = {
     "มะกรูด": { marketPrice: 20, group: "plants-group", emoji: "🌿", unit: "ลูก" },
     "มะนาว": { marketPrice: 4, group: "plants-group", emoji: "🍋", unit: "ลูก" },
