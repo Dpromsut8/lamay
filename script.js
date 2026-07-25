@@ -137,12 +137,12 @@ function initApp() {
 function fixPriceAndQuantityLabels() {
     const priceLabel = document.getElementById("unitPriceLabel");
     if (priceLabel) {
-        priceLabel.innerText = 'ราคาขาย/ซื้อ';
+        priceLabel.innerText = 'ราคา';
     } else {
         const allElements = document.querySelectorAll('*');
         allElements.forEach(el => {
-            if (el.children.length === 0 && (el.textContent.includes('ราคาซื้อ/ขาย') || el.id === 'unitPriceLabel')) {
-                el.innerHTML = 'ราคาขาย/ซื้อ';
+            if (el.children.length === 0 && (el.textContent.includes('ราคาซื้อ/ขาย') || el.textContent.includes('ราคาขาย/ซื้อ') || el.id === 'unitPriceLabel')) {
+                el.innerHTML = 'ราคา';
                 el.id = 'unitPriceLabel';
             }
         });
@@ -154,7 +154,7 @@ function fixPriceAndQuantityLabels() {
     } else {
         const allElements = document.querySelectorAll('*');
         allElements.forEach(el => {
-            if (el.children.length === 0 && (el.textContent.includes('จำนวน (หน่วย)') || el.textContent.trim() === 'จำนวน (หน่วย)')) {
+            if (el.children.length === 0 && (el.textContent.includes('จำนวน (หน่วย)') || el.textContent.includes('จำนวน (จำนวน') || el.textContent.trim() === 'จำนวน (หน่วย)')) {
                 convertToUnitSelector(el);
             }
         });
@@ -166,21 +166,19 @@ function convertToUnitSelector(labelEl) {
     const parentContainer = labelEl.parentElement;
     if (!parentContainer) return;
 
-    if (!document.getElementById('dynamicUnitSelect')) {
-        labelEl.innerHTML = `จำนวน <select id="dynamicUnitSelect" onchange="onManualUnitChange(this.value)" style="background: #1e293b; color: #f8fafc; border: 1px solid #475569; border-radius: 4px; padding: 2px 6px; font-size: 12px; margin-left: 6px; cursor: pointer;">
-            <option value="ตัว">ตัว</option>
-            <option value="กก.">กก.</option>
-            <option value="ลูก">ลูก</option>
-            <option value="กำ">กำ</option>
-            <option value="ม้วน">ม้วน</option>
-            <option value="แผง">แผง</option>
-            <option value="กระสอบ">กระสอบ</option>
-            <option value="ซอง">ซอง</option>
-            <option value="ถุง">ถุง</option>
-            <option value="อัน">อัน</option>
-            <option value="หน่วย" selected>หน่วย</option>
-        </select>`;
-    }
+    labelEl.innerHTML = `จำนวน <select id="dynamicUnitSelect" onchange="onManualUnitChange(this.value)" style="background: #1e293b; color: #f8fafc; border: 1px solid #475569; border-radius: 4px; padding: 1px 4px; font-size: 11px; margin-left: 4px; cursor: pointer;">
+        <option value="ตัว">ตัว</option>
+        <option value="กก.">กก.</option>
+        <option value="ลูก">ลูก</option>
+        <option value="กำ">กำ</option>
+        <option value="ม้วน">ม้วน</option>
+        <option value="แผง">แผง</option>
+        <option value="กระสอบ">กระสอบ</option>
+        <option value="ซอง">ซอง</option>
+        <option value="ถุง">ถุง</option>
+        <option value="อัน">อัน</option>
+        <option value="หน่วย" selected>หน่วย</option>
+    </select>`;
 }
 
 function onManualUnitChange(selectedUnit) {
@@ -222,12 +220,12 @@ function initCollapsibleAddItem() {
 
     const header = document.createElement('div');
     header.id = 'collapsible-add-header';
-    header.style.cssText = "background: #1e293b; color: #f8fafc; padding: 12px 16px; border-radius: 10px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin: 15px 0; border: 1px solid #475569; user-select: none;";
+    header.style.cssText = "background: #1e293b; color: #f8fafc; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin: 10px 0; border: 1px solid #475569; user-select: none; font-size: 13px;";
     header.innerHTML = `<span>➕ เพิ่มรายการสินค้าใหม่</span> <span id="add-collapse-arrow" style="color: #94a3b8;">▶</span>`;
 
     const contentBox = document.createElement('div');
     contentBox.id = 'collapsible-add-box';
-    contentBox.style.cssText = "display: none; background: #0f172a; padding: 14px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 15px;";
+    contentBox.style.cssText = "display: none; background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 10px;";
 
     while (container.firstChild) {
         contentBox.appendChild(container.firstChild);
@@ -287,12 +285,12 @@ function renderGroupContainers() {
         const title = groupTitles[groupId] || groupId.replace('-group', '');
 
         const groupHtml = `
-            <div style="margin-top: 15px; background: #0f172a; border-radius: 10px; border: 1px solid #334155; overflow: hidden;">
-                <div id="group-header-${groupId}" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #1e293b; cursor: pointer; user-select: none;">
-                    <span style="font-weight: bold; color: #f8fafc; font-size: 15px;">📁 ${title} <span id="arrow-${groupId}" style="font-size: 12px; color: #94a3b8;">▼</span></span>
-                    <span style="font-size: 11px; color: #64748b;">(จิ้มชื่อค้าง 4 วินาทีเพื่อลบกลุ่ม)</span>
+            <div style="margin-top: 12px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; overflow: hidden;">
+                <div id="group-header-${groupId}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #1e293b; cursor: pointer; user-select: none;">
+                    <span style="font-weight: bold; color: #f8fafc; font-size: 14px;">📁 ${title} <span id="arrow-${groupId}" style="font-size: 11px; color: #94a3b8;">▼</span></span>
+                    <span style="font-size: 10px; color: #64748b;">(จิ้มค้าง 4 วิ เพื่อลบกลุ่ม)</span>
                 </div>
-                <div id="${groupId}" class="btn-group" style="display: flex; flex-wrap: wrap; gap: 8px; padding: 12px;"></div>
+                <div id="${groupId}" class="btn-group" style="display: flex; flex-wrap: wrap; gap: 6px; padding: 10px;"></div>
             </div>
         `;
         container.insertAdjacentHTML('beforeend', groupHtml);
@@ -356,13 +354,13 @@ function renderButtons(filter = "") {
                 const btn = document.createElement("button");
                 const isLongName = item.name.length > 15;
                 
-                btn.style.cssText = `display: flex; justify-content: space-between; align-items: center; background: #1e293b; color: #cbd5e1; border: 1px solid #475569; padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; width: 100%; text-align: left; gap: 8px;`;
+                btn.style.cssText = `display: flex; justify-content: space-between; align-items: center; background: #1e293b; color: #cbd5e1; border: 1px solid #475569; padding: 8px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s; width: 100%; text-align: left; gap: 6px;`;
                 btn.onmouseover = () => btn.style.borderColor = "#60a5fa";
                 btn.onmouseout = () => btn.style.borderColor = "#475569";
                 
                 btn.innerHTML = `
-                    <span class="btn-title-text" style="font-size: 13px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${item.name}</span>
-                    <span class="btn-price-badge" style="font-size: 11px; background: #334155; padding: 4px 8px; border-radius: 6px; color: #94a3b8; white-space: nowrap;" title="จิ้มค้างเพื่ออัปเดตราคากลางใหม่">${item.marketPrice || 0} ฿/${item.unit || 'หน่วย'}</span>
+                    <span class="btn-title-text" style="font-size: 12px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${item.name}</span>
+                    <span class="btn-price-badge" style="font-size: 10px; background: #334155; padding: 3px 6px; border-radius: 4px; color: #94a3b8; white-space: nowrap;" title="จิ้มค้างเพื่ออัปเดตราคากลางใหม่">${item.marketPrice || 0} ฿/${item.unit || 'หน่วย'}</span>
                 `;
                 
                 btn.onclick = () => {
@@ -619,18 +617,18 @@ function updateTable() {
         
         tr.style.borderBottom = "1px solid #334155";
         tr.innerHTML = `
-            <td style="color: #94a3b8; font-size: 13px; padding: 8px 4px;">${item.date}</td>
-            <td style="text-align: left; padding: 8px 4px;">
+            <td style="color: #94a3b8; font-size: 12px; padding: 6px 4px;">${item.date}</td>
+            <td style="text-align: left; padding: 6px 4px;">
                 ${item.detail || item.name}<br>
-                <span style="font-size: 11px; color: ${color}; font-weight: bold;">
+                <span style="font-size: 10px; color: ${color}; font-weight: bold;">
                     ${item.type}
                 </span>
             </td>
-            <td style="font-weight: bold; color: ${color}; padding: 8px 4px;">
+            <td style="font-weight: bold; color: ${color}; padding: 6px 4px;">
                 ${sign}${amt.toLocaleString()}
             </td>
-            <td style="text-align: center; padding: 8px 4px;">
-                <button onclick="deleteEntry(${item.id})" style="padding: 3px 6px; font-size: 11px; border-radius: 4px; background: transparent; border: 1px solid #ef4444; color: #ef4444; cursor: pointer;">✖</button>
+            <td style="text-align: center; padding: 6px 4px;">
+                <button onclick="deleteEntry(${item.id})" style="padding: 2px 5px; font-size: 10px; border-radius: 4px; background: transparent; border: 1px solid #ef4444; color: #ef4444; cursor: pointer;">✖</button>
             </td>
         `;
         historyBody.appendChild(tr);
@@ -732,16 +730,16 @@ async function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
     const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`การดูแลรักษา การเลี้ยงดู การบำรุง หรือวิธีนำไปใช้งานที่ถูกต้อง ${pureSearchName}`)}`;
 
     openKnowledgeDrawer(`💡 ข้อมูล: ${pureSearchName}`, `
-        <div style="background: #1e293b; border-radius: 10px; padding: 12px; margin-bottom: 12px; border: 1px solid #334155; color: #f8fafc;">
-            <div style="display: flex; align-items: center; gap: 8px; color: #60a5fa; font-weight: bold; margin-bottom: 8px; font-size: 14px;">
-                <span style="font-size: 16px;">✨</span> ข้อมูลภาพรวมโดย AI / Wikipedia
+        <div style="background: #1e293b; border-radius: 8px; padding: 10px; margin-bottom: 10px; border: 1px solid #334155; color: #f8fafc;">
+            <div style="display: flex; align-items: center; gap: 6px; color: #60a5fa; font-weight: bold; margin-bottom: 6px; font-size: 13px;">
+                <span style="font-size: 15px;">✨</span> ข้อมูลภาพรวมโดย AI / Wikipedia
             </div>
-            <div id="wiki-summary-content" style="color: #cbd5e1; font-size: 12px; line-height: 1.5;">
+            <div id="wiki-summary-content" style="color: #cbd5e1; font-size: 11px; line-height: 1.4;">
                 ${foundAI ? aiSummaryText : 'กำลังดึงข้อมูลจาก Wikipedia...'}
             </div>
         </div>
         
-        <a href="${googleSearchUrl}" target="_blank" style="display: block; text-align: center; text-decoration: none; padding: 10px; background: #1e293b; color: #60a5fa; border: 1px solid #475569; border-radius: 8px; font-weight: bold; transition: 0.3s; font-size: 13px;">
+        <a href="${googleSearchUrl}" target="_blank" style="display: block; text-align: center; text-decoration: none; padding: 8px; background: #1e293b; color: #60a5fa; border: 1px solid #475569; border-radius: 6px; font-weight: bold; transition: 0.3s; font-size: 12px;">
             🔍 ดูผลการค้นหาบน Google เพิ่มเติม
         </a>
     `);
