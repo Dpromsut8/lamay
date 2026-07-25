@@ -3,230 +3,273 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ละม้ายฟาร์ม - แพลตฟอร์มจัดการผลผลิต</title>
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css">
+    <title>ระบบบัญชีฟาร์มและจัดการสินค้า</title>
+    <!-- โหลดไลบรารี SortableJS สำหรับลากสลับตำแหน่งสินค้า -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
-        /* สไตล์เพิ่มเติมเพื่อให้ช่องกรอกข้อมูลสวยงามและเข้ากับธีม */
-        .platform-input {
-            width: 100%;
-            padding: 12px;
-            background-color: #0f172a;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0b0f19;
+            color: #f8fafc;
+            margin: 0;
+            padding: 16px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #1e293b;
             border: 1px solid #334155;
             border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        input, select, button {
+            background: #0f172a;
+            border: 1px solid #475569;
             color: #f8fafc;
-            font-size: 16px;
+            padding: 10px;
+            border-radius: 8px;
+            width: 100%;
             box-sizing: border-box;
-            outline: none;
-            transition: border-color 0.2s;
+            margin-top: 6px;
+            margin-bottom: 12px;
+            font-size: 14px;
         }
-        .platform-input:focus {
-            border-color: #3b82f6;
+        button {
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
         }
-        .platform-label {
-            font-size: 13px; 
-            color: #94a3b8; 
-            margin-bottom: 6px; 
-            display: block;
+        button:hover {
+            background: #334155;
+        }
+        .btn-primary {
+            background: #2563eb;
+            border-color: #1d4ed8;
+        }
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        .btn-success {
+            background: #059669;
+            border-color: #047857;
+        }
+        .btn-success:hover {
+            background: #047857;
+        }
+        .btn-danger {
+            background: #dc2626;
+            border-color: #b91c1c;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th {
+            background: #334155;
+            color: #f8fafc;
+            padding: 8px;
+            font-size: 12px;
+            text-align: left;
+        }
+        /* Drawer สำหรับแสดงข้อมูลความรู้ AI */
+        #knowledge-drawer {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #0f172a;
+            border-top: 2px solid #475569;
+            padding: 16px;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.5);
+            z-index: 1000;
+            max-height: 50vh;
+            overflow-y: auto;
         }
     </style>
 </head>
 <body>
 
-    <!-- ================= ระบบยืนยันตัวตน (Authentication) ================= -->
-    <div id="auth-wrapper" class="page">
-        <div id="login-page" class="auth-container">
-            <div class="auth-card">
-                <h2>🔐 เข้าสู่ระบบ</h2>
-                <p class="auth-subtitle">ละม้ายฟาร์ม - แพลตฟอร์มจัดการผลผลิตและบัญชี</p>
-                <div class="input-card">
-                    <input type="text" id="loginNameInput" placeholder="ชื่อผู้ใช้งาน" class="form-input">
-                    <input type="password" id="loginPassInput" placeholder="รหัสผ่าน (ค่าเริ่มต้น: 1234)" class="form-input">
-                    <button onclick="login()" class="btn-primary">เข้าสู่ระบบ</button>
-                </div>
-                <div class="auth-switch">
-                    <span>ยังไม่มีบัญชีผู้ใช้งาน?</span> 
-                    <a href="javascript:void(0)" onclick="switchAuthMode('register')">สมัครสมาชิก</a>
-                </div>
-            </div>
+<div class="container">
+
+    <!-- 1. ส่วนเข้าสู่ระบบ / สมัครสมาชิก (Auth Wrapper) -->
+    <div id="auth-wrapper" class="card">
+        <h2 style="text-align: center; margin-top: 0;">🌾 ระบบจัดการฟาร์ม</h2>
+        
+        <!-- หน้าเข้าสู่ระบบ -->
+        <div id="login-page">
+            <h3>เข้าสู่ระบบ</h3>
+            <label>ชื่อผู้ใช้งาน</label>
+            <input type="text" id="loginNameInput" placeholder="กรอกชื่อผู้ใช้งาน หรือ admin">
+            <label>รหัสผ่าน</label>
+            <input type="password" id="loginPassInput" placeholder="กรอกรหัสผ่าน หรือ 1234">
+            <button class="btn-primary" onclick="login()">เข้าสู่ระบบ</button>
+            <p style="text-align: center; font-size: 12px; color: #94a3b8; cursor: pointer;" onclick="switchAuthMode('register')">ยังไม่มีบัญชี? สมัครสมาชิกที่นี่</p>
         </div>
 
-        <div id="register-page" class="auth-container" style="display:none;">
-            <div class="auth-card">
-                <h2>📝 สมัครสมาชิก</h2>
-                <p class="auth-subtitle">สร้างบัญชีใหม่สำหรับเข้าใช้งานฟาร์ม</p>
-                <div class="input-card">
-                    <input type="text" id="regNameInput" placeholder="กำหนดชื่อผู้ใช้งาน" class="form-input">
-                    <input type="password" id="regPassInput" placeholder="กำหนดรหัสผ่าน" class="form-input">
-                    <input type="password" id="regConfirmPassInput" placeholder="ยืนยันรหัสผ่านอีกครั้ง" class="form-input">
-                    <button onclick="register()" class="btn-success">ลงทะเบียน</button>
-                </div>
-                <div class="auth-switch">
-                    <span>มีบัญชีอยู่แล้ว?</span> 
-                    <a href="javascript:void(0)" onclick="switchAuthMode('login')">เข้าสู่ระบบ</a>
-                </div>
-            </div>
+        <!-- หน้าสมัครสมาชิก -->
+        <div id="register-page" style="display: none;">
+            <h3>สมัครสมาชิก</h3>
+            <label>ชื่อผู้ใช้งาน</label>
+            <input type="text" id="regNameInput" placeholder="ตั้งชื่อผู้ใช้งาน">
+            <label>รหัสผ่าน</label>
+            <input type="password" id="regPassInput" placeholder="ตั้งรหัสผ่าน">
+            <label>ยืนยันรหัสผ่าน</label>
+            <input type="password" id="regConfirmPassInput" placeholder="กรอกรหัสผ่านอีกครั้ง">
+            <button class="btn-success" onclick="register()">ยืนยันการสมัคร</button>
+            <p style="text-align: center; font-size: 12px; color: #94a3b8; cursor: pointer;" onclick="switchAuthMode('login')">มีบัญชีอยู่แล้ว? เข้าสู่ระบบ</p>
         </div>
     </div>
 
-    <!-- ================= หน้าแอปพลิเคชันหลัก (App Dashboard) ================= -->
-    <div id="app-page" class="page" style="display:none;">
-        <header class="game-header">
-            <div>
-                <h1>🌾 FARM LAMAY</h1>
-                <p>สวัสดีคุณ: <span id="displayName" style="color: #60a5fa; font-weight: bold;"></span></p>
+    <!-- 2. หน้าหลักของแอปพลิเคชัน (ซ่อนไว้จนกว่าจะ Login ผ่าน) -->
+    <div id="app-page" style="display: none;">
+        
+        <!-- แถบต้อนรับและปุ่มออกจากระบบ -->
+        <div class="card" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
+            <span>👤 สวัสดี, <strong id="displayName"></strong></span>
+            <button class="btn-danger" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px;" onclick="logout()">ออกจากระบบ</button>
+        </div>
+
+        <!-- ช่องค้นหาสินค้าด่วน -->
+        <div class="card">
+            <label>🔍 ค้นหารายการสินค้า/วัตถุดิบ</label>
+            <input type="text" id="searchFilter" placeholder="พิมพ์ชื่อเพื่อค้นหา..." oninput="filterButtons(this.value)">
+        </div>
+
+        <!-- พื้นที่แสดงกลุ่มสินค้าและปุ่มสินค้า (สร้างโดย JS: renderGroupContainers & renderButtons) -->
+        <div class="card">
+            <h3>📦 รายการสินค้าในระบบ</h3>
+            <div id="groups-container"></div>
+        </div>
+
+        <!-- ฟอร์มเพิ่มสินค้าใหม่เข้าหมวดหมู่ -->
+        <div class="card">
+            <label>ชื่อสินค้าใหม่</label>
+            <input type="text" id="newItemName" placeholder="เช่น 🍋 มะนาวแป้น">
+            
+            <label>ราคากลาง (บาท)</label>
+            <input type="number" id="newItemMarketPrice" placeholder="0">
+            
+            <label>เลือกกลุ่มสินค้า</label>
+            <select id="groupSelect" onchange="toggleNewGroupInput(this.value)"></select>
+            <input type="text" id="newGroupName" placeholder="ตั้งชื่อกลุ่มใหม่..." style="display: none;">
+
+            <label>หน่วยสินค้า</label>
+            <select id="newItemUnit" onchange="toggleCustomUnitInput(this.value)">
+                <option value="ตัว">ตัว</option>
+                <option value="กก.">กก.</option>
+                <option value="ลูก">ลูก</option>
+                <option value="กำ">กำ</option>
+                <option value="แผง">แผง</option>
+                <option value="กระสอบ">กระสอบ</option>
+                <option value="ถุง">ถุง</option>
+                <option value="ม้วน">ม้วน</option>
+                <option value="ซอง">ซอง</option>
+                <option value="custom">-- กำหนดหน่วยเอง --</option>
+            </select>
+            <input type="text" id="customUnitName" placeholder="พิมพ์หน่วยของคุณ..." style="display: none;">
+
+            <button class="btn-primary" onclick="addNewButton()">➕ เพิ่มสินค้าใหม่</button>
+        </div>
+
+        <!-- 3. ส่วนบัญชีฟาร์ม (Account Panel) สำหรับกรอกรายรับ-รายจ่าย -->
+        <div class="card account-panel">
+            <h3>💰 บัญชีฟาร์ม (รายรับ / รายจ่าย)</h3>
+            
+            <label>วันที่</label>
+            <input type="date" id="expenseDate">
+
+            <label>รายการ</label>
+            <input type="text" id="expenseDetail" placeholder="ชื่อรายการ..." oninput="onTypeDebounce(this)">
+
+            <!-- กล่องเทียบราคากลางอัตโนมัติ -->
+            <div id="priceCompareBox" style="display: none; background: #0f172a; padding: 8px 12px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 12px; font-size: 13px; justify-content: space-between; align-items: center;">
+                <span>💡 ราคากลางอ้างอิง: <strong id="marketPriceDisplay" style="color: #60a5fa;">0</strong> <span id="marketPriceUnit" style="color: #94a3b8;">฿</span></span>
             </div>
-            <button onclick="logout()" class="danger-btn">ออกจากระบบ</button>
-        </header>
 
-        <main class="dashboard-grid">
-            <!-- ฝั่งเมนูจัดการ (Menu Panel) -->
-            <section class="menu-panel">
-                <h3>📦 หน่วยจัดการผลผลิต</h3>
-                
-                <input type="text" id="searchItem" placeholder="🔍 ค้นหารายการ..." oninput="filterButtons(this.value)" class="form-input" style="margin-bottom: 20px; width: 100%;">
-                
-                <div id="groups-container"></div>
-                
-                <div class="editor-box">
-                    <h4 style="margin-top: 0; font-size: 18px; color: #60a5fa;">⚙️ เพิ่มรายการสินค้าใหม่</h4>
-                    <div class="input-card">
-                        <input type="text" id="newItemName" placeholder="ชื่อรายการสินค้า" class="form-input" oninput="onTypeDebounce(this)">
-                        
-                        <div style="display: flex; gap: 10px;">
-                            <input type="number" id="newItemMarketPrice" placeholder="ราคากลางตลาด (บาท)" class="form-input" style="flex: 1;">
-                        </div>
-
-                        <div style="display: flex; gap: 10px;">
-                            <select id="newItemUnit" class="form-input" style="flex: 1;" onchange="toggleCustomUnitInput(this.value)">
-                                <option value="ลูก">หน่วย: ลูก</option>
-                                <option value="กก.">หน่วย: กก. (กิโลกรัม)</option>
-                                <option value="กระสอบ">หน่วย: กระสอบ</option>
-                                <option value="ตัว">หน่วย: ตัว</option>
-                                <option value="อัน">หน่วย: อัน</option>
-                                <option value="แผง">หน่วย: แผง</option>
-                                <option value="กำ">หน่วย: กำ</option>
-                                <option value="มัด">หน่วย: มัด</option>
-                                <option value="ฟอง">หน่วย: ฟอง</option>
-                                <option value="ถุง">หน่วย: ถุง</option>
-                                <option value="ขวด">หน่วย: ขวด</option>
-                                <option value="custom">-- ระบุหน่วยเอง --</option>
-                            </select>
-                            <input type="text" id="customUnitName" placeholder="ระบุหน่วยเอง" class="form-input" style="flex: 1; display: none;">
-                        </div>
-                        
-                        <select id="groupSelect" class="form-input" onchange="toggleNewGroupInput(this.value)"></select>
-                        <input type="text" id="newGroupName" placeholder="ชื่อกลุ่มใหม่" class="form-input" style="display: none;">
-                        
-                        <button onclick="addNewButton()" class="btn-add" style="width: 100%; background: #3b82f6; font-size: 16px; font-weight: bold; padding: 12px; margin-top: 5px;">➕ เพิ่มปุ่มรายการ</button>
-                    </div>
-                    <p style="font-size: 0.85em; color: #94a3b8; margin-top: 12px; text-align: center;">* กดค้างหรือคลิกขวาที่ปุ่มสินค้าเพื่อลบรายการ</p>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label>ราคาต่อหน่วย (฿)</label>
+                    <input type="number" id="unitPrice" placeholder="0" oninput="calculateTotal()">
                 </div>
-            </section>
-
-            <!-- ฝั่งบัญชี (Account Panel) -->
-            <section class="account-panel">
-                <h2>💰 บัญชีฟาร์ม</h2>
-                
-                <!-- 1. บอร์ดสรุปยอด -->
-                <div id="summaryBoard" class="summary-box">
-                    <p>รายรับ: <span id="totalIncome" style="color: #10b981;">0</span> | รายจ่าย: <span id="totalExpense" style="color: #ef4444;">0</span></p>
-                    <h3>คงเหลือ: <span id="netBalance">0</span> บาท</h3>
+                <div style="flex: 1;">
+                    <label>จำนวน</label>
+                    <input type="number" id="unitQuantity" value="1" placeholder="1" oninput="calculateTotal()">
                 </div>
+            </div>
 
-                <!-- 2. กล่องความรู้ (Google Search Drawer) -->
-                <div id="knowledge-drawer" class="knowledge-frame" style="display:none; margin-top: 15px; background: #1e293b; border: 1px solid #475569; border-radius: 12px; padding: 15px;">
-                    <div class="knowledge-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 10px;">
-                        <h3 id="knowledge-title" style="margin: 0; color: #e2e8f0; font-size: 16px;">ข้อมูลรายการ</h3>
-                        <button onclick="closeDrawer()" class="close-icon-btn" style="background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer;">✖</button>
-                    </div>
-                    <div id="knowledge-content" class="knowledge-content" style="color: #cbd5e1; font-size: 14px; line-height: 1.5;"></div>
-                </div>
+            <!-- เลือกหน่วยกำกับเวลาบันทึกบัญชี -->
+            <label>หน่วยของรายการ</label>
+            <select id="dynamicUnitSelect" onchange="onManualUnitChange(this.value)">
+                <option value="หน่วย">หน่วย</option>
+                <option value="ตัว">ตัว</option>
+                <option value="กก.">กก.</option>
+                <option value="ลูก">ลูก</option>
+                <option value="กำ">กำ</option>
+                <option value="แผง">แผง</option>
+                <option value="กระสอบ">กระสอบ</option>
+            </select>
 
-                <!-- 3. ฟอร์มบันทึกรายการ -->
-                <div class="input-card" style="margin-top: 20px; background: #1e293b; padding: 15px; border-radius: 12px; border: 1px solid #334155;">
-                    <input type="date" id="expenseDate" class="platform-input" style="margin-bottom: 12px;">
-                    <input type="text" id="expenseDetail" placeholder="ระบุรายการ (คลิกปุ่มบนหรือพิมพ์ AI ค้นหาอัตโนมัติ)" class="platform-input" style="margin-bottom: 12px;" oninput="onTypeDebounce(this)">
-                    
-                    <!-- ส่วนแสดงราคากลาง (ตลาด) -->
-                    <div id="priceCompareBox" class="price-compare-card" style="display: none; justify-content: center; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 1px dashed #475569;">
-                        <span style="font-size: 14px;">📊 ราคากลาง (ตลาด): <strong id="marketPriceDisplay" style="color: #60a5fa;">0</strong> <span id="marketPriceUnit" style="font-size: 12px; color: #94a3b8;">฿</span></span>
-                    </div>
+            <div style="text-align: right; font-size: 15px; margin-bottom: 12px; font-weight: bold;">
+                รวมเป็นเงินทั้งสิ้น: <span id="displayTotal" style="color: #38bdf8;">0</span> บาท
+            </div>
 
-                    <!-- ส่วนฟอร์ม ราคา และ จำนวน (พร้อมลักษณนามตามต้องการ) -->
-                    <div style="display: flex; gap: 12px; margin-bottom: 15px;">
-                        <!-- ช่อง ราคา -->
-                        <div style="flex: 1; background: #0f172a; padding: 8px 10px; border-radius: 8px; border: 1px solid #334155;">
-                            <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px; font-weight: 500;">ราคา</div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <input type="number" id="unitPrice" placeholder="0" oninput="calculateTotal()" style="width: 100%; border: none; background: transparent; color: #f8fafc; font-size: 15px; font-weight: bold; outline: none;">
-                                <span id="unitPriceLabel" style="font-size: 12px; color: #94a3b8; white-space: nowrap;">บาท</span>
-                            </div>
-                        </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-success" style="flex: 1;" onclick="addEntry('รายรับ')">📥 บันทึกรายรับ</button>
+                <button class="btn-danger" style="flex: 1;" onclick="addEntry('รายจ่าย')">📤 บันทึกรายจ่าย</button>
+            </div>
+        </div>
 
-                        <!-- ช่อง จำนวน (ลักษณนาม) -->
-                        <div style="flex: 1; background: #0f172a; padding: 8px 10px; border-radius: 8px; border: 1px solid #334155;">
-                            <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px; font-weight: 500; display: flex; justify-content: space-between; align-items: center;">
-                                <span>จำนวน</span>
-                                <select id="dynamicUnitSelect" onchange="onManualUnitChange(this.value)" style="background: #1e293b; color: #f8fafc; border: 1px solid #475569; border-radius: 4px; padding: 1px 4px; font-size: 11px; cursor: pointer;">
-                                    <option value="ตัว">ตัว</option>
-                                    <option value="กก.">กก.</option>
-                                    <option value="ลูก">ลูก</option>
-                                    <option value="กำ">กำ</option>
-                                    <option value="ม้วน">ม้วน</option>
-                                    <option value="แผง">แผง</option>
-                                    <option value="กระสอบ">กระสอบ</option>
-                                    <option value="ซอง">ซอง</option>
-                                    <option value="ถุง">ถุง</option>
-                                    <option value="อัน">อัน</option>
-                                    <option value="หน่วย" selected>หน่วย</option>
-                                </select>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <input type="number" id="unitQuantity" placeholder="1" value="1" oninput="calculateTotal()" style="width: 100%; border: none; background: transparent; color: #f8fafc; font-size: 15px; font-weight: bold; outline: none;">
-                                <span id="unitQtyLabel" style="font-size: 12px; color: #94a3b8; display: none;">ลักษณนาม</span>
-                            </div>
-                        </div>
-                    </div>
+        <!-- 4. ส่วนสรุปยอดและประวัติบัญชี -->
+        <div class="card">
+            <h3>📊 สรุปยอดการเงิน</h3>
+            <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;">
+                <span>รายรับรวม: <strong id="totalIncome" style="color: #10b981;">0</strong> ฿</span>
+                <span>รายจ่ายรวม: <strong id="totalExpense" style="color: #ef4444;">0</strong> ฿</span>
+            </div>
+            <div style="font-size: 16px; font-weight: bold; margin-bottom: 12px;">
+                คงเหลือสุทธิ: <span id="netBalance">0</span> ฿
+            </div>
 
-                    <div class="total-display" style="text-align: right; color: #cbd5e1; margin-top: 5px; margin-bottom: 15px;">
-                        ยอดรวม: <span id="displayTotal" style="font-size: 1.4em; font-weight: bold; color: #f59e0b;">0</span> บาท
-                    </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+                <h4 id="historyCountText" style="margin: 0;">รายการใหม่</h4>
+                <button id="toggleHistoryBtn" style="width: auto; margin: 0; padding: 6px 10px; font-size: 11px;" onclick="toggleHistoryLimit()">ดูประวัติทั้งหมด 📝</button>
+            </div>
 
-                    <div style="display: flex; gap: 10px;">
-                        <button onclick="addEntry('รายรับ')" style="flex: 1; background:#10b981; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; padding: 14px; cursor: pointer;">💰 รับเงิน</button>
-                        <button onclick="addEntry('รายจ่าย')" style="flex: 1; background:#ef4444; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; padding: 14px; cursor: pointer;">💸 จ่ายเงิน</button>
-                    </div>
-                </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>วันที่</th>
+                        <th>รายการ</th>
+                        <th>จำนวนเงิน</th>
+                        <th style="text-align: center;">ลบ</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody"></tbody>
+            </table>
 
-                <!-- 4. ตารางประวัติรายการ -->
-                <div style="margin-top: 25px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h3 style="margin: 0; font-size: 16px;">รายการล่าสุด (<span id="historyCountText">5 รายการ</span>)</h3>
-                        <button onclick="toggleHistoryLimit()" id="toggleHistoryBtn" class="btn-secondary" style="font-size: 12px; padding: 6px 12px; background: #334155; color: white; border: none; border-radius: 6px; cursor: pointer;">ดูประวัติทั้งหมด 📝</button>
-                    </div>
+            <button class="btn-danger" style="margin-top: 16px; font-size: 12px;" onclick="clearAllData()">⚠️ ล้างประวัติบัญชีทั้งหมด</button>
+        </div>
 
-                    <div style="overflow-x: auto;">
-                        <table id="historyTable" class="history-table" style="width: 100%; border-collapse: collapse; text-align: left;">
-                            <thead>
-                                <tr style="border-bottom: 1px solid #475569; color: #94a3b8; font-size: 13px;">
-                                    <th style="padding: 10px 5px;">วันที่</th>
-                                    <th style="padding: 10px 5px;">รายการ</th>
-                                    <th style="padding: 10px 5px;">จำนวนเงิน</th>
-                                    <th style="padding: 10px 5px; text-align: center;">ลบ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="historyBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <button onclick="clearAllData()" style="width: 100%; background:#64748b; color: white; border: none; border-radius: 8px; margin-top: 20px; padding: 12px; cursor: pointer; font-weight: bold;">🗑️ ล้างข้อมูลทั้งหมด</button>
-            </section>
-        </main>
     </div>
+</div>
 
-    <script src="script.js"></script>
+<!-- 5. Drawer สำหรับแสดงข้อมูลความรู้ AI ด้านล่างจอ -->
+<div id="knowledge-drawer">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h4 id="knowledge-title" style="margin: 0; color: #60a5fa; font-size: 14px;">💡 ข้อมูล</h4>
+        <button onclick="closeDrawer()" style="background: none; border: none; color: #94a3b8; font-size: 16px; cursor: pointer; width: auto; margin: 0; padding: 0;">✕</button>
+    </div>
+    <div id="knowledge-content"></div>
+</div>
+
+<!-- เชื่อมโยงไฟล์ JavaScript ของคุณ (ตัวอย่างเช่น script.js) -->
+<script src="script.js"></script>
+
 </body>
 </html>

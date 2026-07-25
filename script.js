@@ -1,5 +1,3 @@
-// โค้ด Script ที่ปรับปรุงและเรียบเรียงใหม่ทั้งหมด
-
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
     .then(() => console.log('Service Worker Registered'))
@@ -43,10 +41,10 @@ const smartMarketData = {
 };
 
 const smartAISummaries = {
-    "ไก่ไข่": "การเลี้ยงไก่ไข่ประกอบด้วย 3 ส่วนหลัก ได้แก่ <strong>การจัดการโรงเรือนและอาหาร</strong>, <strong>การดูแลสุขภาพ</strong>, และ <strong>ต้นทุนราคาพันธุ์สัตว์</strong> โดยควรมีพื้นที่ให้ไก่เดินเพื่อลดความเครียด และให้แสงสว่าง 14-16 ชั่วโมง/วัน เพื่อกระตุ้นการออกไข่",
-    "ปลานิล": "ปลานิลเป็นปลาที่โตไว เลี้ยงง่าย ทนทานต่อสภาพน้ำ แนะนำให้เลี้ยงในบ่อดินที่มีความลึก 1-1.5 เมตร อัตราการปล่อย 3-5 ตัว/ตร.ม. ใช้อาหารเม็ดลอยน้ำร่วมกับพืชน้ำเพื่อลดต้นทุน",
-    "มะกรูด": "มะกรูดชอบแสงแดดจัดและน้ำปานกลาง ไม่ชอบน้ำขัง นิยมขยายพันธุ์ด้วยการตอนกิ่ง โรคที่ต้องระวังคือหนอนชอนใบ ควรตัดแต่งกิ่งสม่ำเสมอเพื่อให้แตกยอดใหม่และเก็บใบได้ง่าย",
-    "เห็ด": "การเพาะเห็ดนางฟ้า/นางรม ควรทำในโรงเรือนที่รักษาความชื้นได้ 70-80% อากาศถ่ายเทสะดวก ไม่โดนแสงแดดโดยตรง รดน้ำเป็นละอองฝอยเช้า-เย็น สามารถเก็บผลผลิตได้ใน 7-10 วันหลังเปิดดอก"
+    "ไก่ไข่": "การเลี้ยงไก่ไข่ประกอบด้วย 3 ส่วนหลัก ได้แก่ <strong>การจัดการโรงเรือนและอาหาร</strong>, <strong>การดูแลสุขภาพ</strong>, และ <strong>ต้นทุนราคาพันธุ์สัตว์</strong> ควรมีพื้นที่ให้ไก่เดินเพื่อลดความเครียด และให้แสงสว่าง 14-16 ชั่วโมง/วัน",
+    "ปลานิล": "ปลานิลเป็นปลาที่โตไว เลี้ยงง่าย ทนทานต่อสภาพน้ำ แนะนำให้เลี้ยงในบ่อดินลึก 1-1.5 เมตร อัตราปล่อย 3-5 ตัว/ตร.ม.",
+    "มะกรูด": "มะกรูดชอบแสงแดดจัดและน้ำปานกลาง ไม่ชอบน้ำขัง ขยายพันธุ์ด้วยการตอนกิ่ง ระวังหนอนชอนใบ",
+    "เห็ด": "การเพาะเห็ดนางฟ้า/นางรม ควรทำในโรงเรือนรักษาความชื้น 70-80% อากาศถ่ายเทสะดวก รดน้ำเช้า-เย็น เก็บผลผลิตได้ใน 7-10 วัน"
 };
 
 window.onload = () => {
@@ -76,15 +74,15 @@ function checkAndUpdateDailyMarketPrices() {
 }
 
 function switchAuthMode(mode) {
-    const loginBox = document.getElementById("login-box") || document.querySelector(".login-box");
-    const regBox = document.getElementById("reg-box") || document.querySelector(".reg-box");
+    const loginPage = document.getElementById("login-page");
+    const regPage = document.getElementById("register-page");
     
     if (mode === 'login') {
-        if(loginBox) loginBox.style.display = "block";
-        if(regBox) regBox.style.display = "none";
+        if(loginPage) loginPage.style.display = "block";
+        if(regPage) regPage.style.display = "none";
     } else {
-        if(loginBox) loginBox.style.display = "none";
-        if(regBox) regBox.style.display = "block";
+        if(loginPage) loginPage.style.display = "none";
+        if(regPage) regPage.style.display = "block";
     }
 }
 
@@ -107,7 +105,7 @@ function login() {
     const savedUser = JSON.parse(localStorage.getItem('farmUser'));
 
     const isValidRegisteredUser = savedUser && savedUser.name === nameInput && savedUser.pass === passInput;
-    const isDefaultAdmin = (nameInput === "admin" && passInput === "Lamay@2026");
+    const isDefaultAdmin = (nameInput === "admin" && passInput === "1234");
 
     if (isValidRegisteredUser || isDefaultAdmin) {
         isAdmin = true;
@@ -308,22 +306,52 @@ function renderButtons(filter = "") {
                 const isLongName = item.name.length > 15;
                 
                 btn.style.cssText = `display: flex; justify-content: space-between; align-items: center; background: #1e293b; color: #cbd5e1; border: 1px solid #475569; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; width: 100%; text-align: left; gap: 6px;`;
+                btn.onmouseover = () => btn.style.borderColor = "#60a5fa";
+                btn.onmouseout = () => btn.style.borderColor = "#475569";
                 
                 btn.innerHTML = `
                     <span class="btn-title-text" style="font-size: 12px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${item.name}</span>
-                    <span class="btn-price-badge" style="font-size: 10px; background: #334155; padding: 3px 6px; border-radius: 6px; color: #94a3b8; white-space: nowrap;">${item.marketPrice || 0} ฿/${item.unit || 'หน่วย'}</span>
+                    <span class="btn-price-badge" style="font-size: 10px; background: #334155; padding: 3px 6px; border-radius: 6px; color: #94a3b8; white-space: nowrap;" title="จิ้มค้างเพื่ออัปเดตราคากลาง">${item.marketPrice || 0} ฿/${item.unit || 'หน่วย'}</span>
                 `;
                 
+                // เมื่อคลิกปุ่มสินค้า -> กรอกข้อมูลอัตโนมัติ + เลื่อนหน้าจอไปที่บัญชีฟาร์ม
                 btn.onclick = () => {
                     const itemUnit = item.unit || "หน่วย";
                     currentSelectedUnit = itemUnit;
+
                     document.getElementById("expenseDetail").value = item.name;
-                    document.getElementById("unitPrice").value = ""; 
+                    document.getElementById("unitPrice").value = item.marketPrice || ""; 
                     document.getElementById("unitQuantity").value = 1;
+                    
                     displayPriceComparison(item.name, item.marketPrice || 0, itemUnit);
                     updateUnitLabels(itemUnit);
                     calculateTotal();
+                    
+                    const cleanName = item.name.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
+                    fetchGoogleKnowledgeData(cleanName, item.name);
+                    
+                    // สั่งเลื่อนหน้าจออัตโนมัติไปยังส่วนบัญชีฟาร์มด้านขวา
+                    const accountPanel = document.querySelector('.account-panel');
+                    if (accountPanel) {
+                        accountPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
                 };
+
+                let pressTimer;
+                const titleSpan = btn.querySelector('.btn-title-text');
+                const priceBadge = btn.querySelector('.btn-price-badge');
+
+                titleSpan.addEventListener('touchstart', () => {
+                    pressTimer = setTimeout(() => openEditItemModal(groupId, index), 600);
+                });
+                titleSpan.addEventListener('touchend', () => clearTimeout(pressTimer));
+                titleSpan.oncontextmenu = (e) => { e.preventDefault(); openEditItemModal(groupId, index); };
+
+                priceBadge.addEventListener('touchstart', () => {
+                    pressTimer = setTimeout(() => refreshSingleItemPrice(groupId, index), 600);
+                });
+                priceBadge.addEventListener('touchend', () => clearTimeout(pressTimer));
+                priceBadge.oncontextmenu = (e) => { e.preventDefault(); refreshSingleItemPrice(groupId, index); };
 
                 const wrapper = document.createElement("div");
                 wrapper.style.cssText = `flex: ${isLongName ? "1 1 100%" : "1 1 calc(50% - 4px)"}; cursor: grab;`;
@@ -353,6 +381,52 @@ function renderButtons(filter = "") {
         }
     }
 }
+
+function refreshSingleItemPrice(groupId, index) {
+    const item = farmDataStorage[groupId][index];
+    let foundNewPrice = false;
+
+    for (let key in smartMarketData) {
+        if (item.name.includes(key)) {
+            item.marketPrice = smartMarketData[key].marketPrice;
+            item.unit = smartMarketData[key].unit;
+            foundNewPrice = true;
+            break;
+        }
+    }
+
+    localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
+    renderButtons();
+    
+    if (foundNewPrice) {
+        alert(`🔄 อัปเดตราคากลางของ "${item.name}" เป็น ${item.marketPrice} บาท เรียบร้อยแล้ว!`);
+    } else {
+        alert(`ℹ️ ไม่พบราคากลางออนไลน์ใหม่ สามารถแก้ไขราคาเองได้โดยจิ้มค้างที่ชื่อปุ่ม`);
+    }
+}
+
+function openEditItemModal(groupId, index) {
+    const item = farmDataStorage[groupId][index];
+    const newName = prompt(`⚙️ แก้ไขข้อมูลรายการ:`, item.name);
+    if (newName === null) return;
+
+    const newPrice = prompt(`💰 แก้ไขราคากลาง (บาท):`, item.marketPrice || 0);
+    if (newPrice === null) return;
+
+    const newUnit = prompt(`📦 แก้ไขหน่วย (เช่น ตัว, กก., ลูก, อัน):`, item.unit || "หน่วย");
+    if (newUnit === null) return;
+
+    item.name = getSmartEmoji(newName.trim());
+    item.marketPrice = parseFloat(newPrice) || 0;
+    item.unit = newUnit.trim() || "หน่วย";
+
+    localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
+    renderButtons();
+    updateGroupSelectOptions();
+    alert("✨ บันทึกการแก้ไขเรียบร้อยแล้ว!");
+}
+
+function filterButtons(query) { renderButtons(query); }
 
 function updateGroupSelectOptions() {
     const select = document.getElementById("groupSelect");
@@ -514,13 +588,9 @@ function updateTable() {
             <td style="color: #94a3b8; font-size: 12px; padding: 6px 4px;">${item.date}</td>
             <td style="text-align: left; padding: 6px 4px;">
                 ${item.detail || item.name}<br>
-                <span style="font-size: 10px; color: ${color}; font-weight: bold;">
-                    ${item.type}
-                </span>
+                <span style="font-size: 10px; color: ${color}; font-weight: bold;">${item.type}</span>
             </td>
-            <td style="font-weight: bold; color: ${color}; padding: 6px 4px;">
-                ${sign}${amt.toLocaleString()}
-            </td>
+            <td style="font-weight: bold; color: ${color}; padding: 6px 4px;">${sign}${amt.toLocaleString()}</td>
             <td style="text-align: center; padding: 6px 4px;">
                 <button onclick="deleteEntry(${item.id})" style="padding: 2px 5px; font-size: 10px; border-radius: 4px; background: transparent; border: 1px solid #ef4444; color: #ef4444; cursor: pointer;">✖</button>
             </td>
@@ -542,6 +612,42 @@ function deleteEntry(id) {
         localStorage.setItem('farmData', JSON.stringify(farmData)); 
         updateTable(); 
     }
+}
+
+function clearAllData() { 
+    if (confirm("⚠️ อันตราย: คุณแน่ใจหรือไม่ว่าต้องการล้างประวัติบัญชีทั้งหมด?")) { 
+        farmData = [];
+        localStorage.removeItem('farmData');
+        updateTable();
+        alert("ล้างข้อมูลบัญชีเรียบร้อยแล้ว"); 
+    } 
+}
+
+function onTypeDebounce(inputElement) {
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
+        const query = inputElement.value.trim();
+        if (query.length >= 1) handleRealtimeSearch(query);
+    }, DEBOUNCE_DELAY);
+}
+
+function handleRealtimeSearch(query) {
+    const cleanName = query.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
+    let matchedData = null;
+    for (let key in smartMarketData) {
+        if (cleanName.includes(key)) {
+            matchedData = smartMarketData[key];
+            break;
+        }
+    }
+
+    const currentMarketPrice = matchedData ? matchedData.marketPrice : 0;
+    const matchedUnit = matchedData ? matchedData.unit : "หน่วย";
+    
+    currentSelectedUnit = matchedUnit;
+    updateUnitLabels(matchedUnit);
+    displayPriceComparison(query, currentMarketPrice, matchedUnit);
+    fetchGoogleKnowledgeData(cleanName, query);
 }
 
 function displayPriceComparison(itemName, marketPrice, unit) {
@@ -566,4 +672,47 @@ function getSmartEmoji(text) {
         if (text.includes(key)) return smartMarketData[key].emoji + " " + text;
     }
     return text;
+}
+
+async function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
+    if (!rawItemName) return;
+    const pureSearchName = rawItemName.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
+
+    let aiSummaryText = "";
+    let foundAI = false;
+    
+    for (let key in smartAISummaries) {
+        if (pureSearchName.includes(key)) {
+            aiSummaryText = smartAISummaries[key];
+            foundAI = true;
+            break;
+        }
+    }
+
+    const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`การดูแลรักษา วิธีนำไปใช้งาน ${pureSearchName}`)}`;
+
+    openKnowledgeDrawer(`💡 ข้อมูล: ${pureSearchName}`, `
+        <div style="background: #1e293b; border-radius: 10px; padding: 10px; margin-bottom: 10px; border: 1px solid #334155; color: #f8fafc;">
+            <div style="color: #60a5fa; font-weight: bold; margin-bottom: 6px; font-size: 13px;">✨ ข้อมูลภาพรวมโดย AI</div>
+            <div id="wiki-summary-content" style="color: #cbd5e1; font-size: 11px; line-height: 1.4;">
+                ${foundAI ? aiSummaryText : 'กำลังดึงข้อมูล...'}
+            </div>
+        </div>
+        <a href="${googleSearchUrl}" target="_blank" style="display: block; text-align: center; text-decoration: none; padding: 8px; background: #1e293b; color: #60a5fa; border: 1px solid #475569; border-radius: 8px; font-weight: bold; font-size: 12px;">
+            🔍 ค้นหาบน Google เพิ่มเติม
+        </a>
+    `);
+}
+
+function openKnowledgeDrawer(title, htmlContent) {
+    const drawer = document.getElementById('knowledge-drawer');
+    if (!drawer) return;
+    document.getElementById('knowledge-title').textContent = title;
+    document.getElementById('knowledge-content').innerHTML = htmlContent;
+    drawer.style.display = 'block';
+}
+
+function closeDrawer() {
+    const drawer = document.getElementById('knowledge-drawer');
+    if (drawer) drawer.style.display = 'none';
 }
