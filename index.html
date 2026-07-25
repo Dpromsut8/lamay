@@ -4,8 +4,32 @@
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ละม้ายฟาร์ม - จัดการผลผลิต</title>
+    <title>ละม้ายฟาร์ม - แพลตฟอร์มจัดการผลผลิต</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* สไตล์เพิ่มเติมเพื่อให้ช่องกรอกข้อมูลเหมือนแบบฟอร์มในรูป */
+        .platform-input {
+            width: 100%;
+            padding: 12px;
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            color: #f8fafc;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .platform-input:focus {
+            border-color: #3b82f6;
+        }
+        .platform-label {
+            font-size: 13px; 
+            color: #94a3b8; 
+            margin-bottom: 6px; 
+            display: block;
+        }
+    </style>
 </head>
 <body>
 
@@ -14,7 +38,7 @@
         <div id="login-page" class="auth-container">
             <div class="auth-card">
                 <h2>🔐 เข้าสู่ระบบ</h2>
-                <p class="auth-subtitle">ละม้ายฟาร์ม - จัดการผลผลิตและบัญชี</p>
+                <p class="auth-subtitle">ละม้ายฟาร์ม - แพลตฟอร์มจัดการผลผลิตและบัญชี</p>
                 <div class="input-card">
                     <input type="text" id="loginNameInput" placeholder="ชื่อผู้ใช้งาน" class="form-input">
                     <input type="password" id="loginPassInput" placeholder="รหัสผ่าน (ค่าเริ่มต้น: 1234)" class="form-input">
@@ -110,63 +134,64 @@
                     <h3>คงเหลือ: <span id="netBalance">0</span> บาท</h3>
                 </div>
 
-                <!-- 2. กล่องความรู้ (Knowledge Drawer) ใต้คงเหลือ ตามที่ต้องการ -->
-                <div id="knowledge-drawer" class="knowledge-frame" style="display:none; margin-top: 15px;">
-                    <div class="knowledge-header">
-                        <h3 id="knowledge-title">ชื่อรายการ</h3>
-                        <button onclick="closeDrawer()" class="close-icon-btn">✖</button>
+                <!-- 2. กล่องความรู้ (Google Search Drawer) -->
+                <div id="knowledge-drawer" class="knowledge-frame" style="display:none; margin-top: 15px; background: #1e293b; border: 1px solid #475569; border-radius: 12px; padding: 15px;">
+                    <div class="knowledge-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 10px;">
+                        <h3 id="knowledge-title" style="margin: 0; color: #e2e8f0; font-size: 16px;">ข้อมูลรายการ</h3>
+                        <button onclick="closeDrawer()" class="close-icon-btn" style="background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer;">✖</button>
                     </div>
-                    <div id="knowledge-content" class="knowledge-content">
-                        <!-- ข้อมูลความรู้จาก AI / อินเทอร์เน็ตจะแสดงที่นี่ -->
+                    <div id="knowledge-content" class="knowledge-content" style="color: #cbd5e1; font-size: 14px; line-height: 1.5;">
+                        <!-- ข้อมูลและปุ่มค้นหา Google จะมาแสดงที่นี่ -->
                     </div>
                 </div>
 
                 <!-- 3. ฟอร์มบันทึกรายการ -->
                 <div class="input-card" style="margin-top: 20px; background: #1e293b; padding: 15px; border-radius: 12px; border: 1px solid #334155;">
-                    <input type="date" id="expenseDate">
-                    <input type="text" id="expenseDetail" placeholder="ระบุรายการ (คลิกปุ่มบนหรือพิมพ์ AI ค้นหาอัตโนมัติ)" oninput="onTypeDebounce(this)">
+                    <input type="date" id="expenseDate" class="platform-input" style="margin-bottom: 12px;">
+                    <input type="text" id="expenseDetail" placeholder="ระบุรายการ (คลิกปุ่มบนหรือพิมพ์ AI ค้นหาอัตโนมัติ)" class="platform-input" style="margin-bottom: 12px;" oninput="onTypeDebounce(this)">
                     
-                    <!-- ส่วนแสดงราคากลาง (ตลาด) อิงจากอินเทอร์เน็ต/AI -->
-                    <div id="priceCompareBox" class="price-compare-card" style="display: none; justify-content: center;">
-                        <span>📊 ราคากลาง (ตลาด): <strong id="marketPriceDisplay" style="color: #60a5fa;">0</strong> <span id="marketPriceUnit" style="font-size: 11px;">฿</span></span>
+                    <!-- ส่วนแสดงราคากลาง (ตลาด) -->
+                    <div id="priceCompareBox" class="price-compare-card" style="display: none; justify-content: center; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 1px dashed #475569;">
+                        <span style="font-size: 14px;">📊 ราคากลาง (ตลาด): <strong id="marketPriceDisplay" style="color: #60a5fa;">0</strong> <span id="marketPriceUnit" style="font-size: 12px; color: #94a3b8;">฿</span></span>
                     </div>
 
-                    <div style="display: flex; gap: 8px;">
+                    <!-- ส่วนฟอร์ม ราคา และ จำนวน ตามแบบเป๊ะๆ -->
+                    <div style="display: flex; gap: 12px; margin-bottom: 15px;">
                         <div style="flex: 1;">
-                            <label style="font-size: 12px; color: #94a3b8;">ราคาซื้อ/ขายจริง (<span id="unitPriceLabel">บาท</span>)</label>
-                            <input type="number" id="unitPrice" placeholder="0" oninput="calculateTotal()">
+                            <label class="platform-label">ราคาซื้อ/ขายจริง (<span id="unitPriceLabel">บาท</span>)</label>
+                            <input type="number" id="unitPrice" class="platform-input" placeholder="0" oninput="calculateTotal()">
                         </div>
                         <div style="flex: 1;">
-                            <label style="font-size: 12px; color: #94a3b8;">จำนวน (<span id="unitQtyLabel">หน่วย</span>)</label>
-                            <input type="number" id="unitQuantity" placeholder="1" oninput="calculateTotal()">
+                            <label class="platform-label">จำนวน (<span id="unitQtyLabel">หน่วย</span>)</label>
+                            <input type="number" id="unitQuantity" class="platform-input" placeholder="1" value="1" oninput="calculateTotal()">
                         </div>
                     </div>
 
-                    <div class="total-display" style="text-align: right; color: #cbd5e1; margin-top: 5px;">
-                        ยอดรวม: <span id="displayTotal" style="font-size: 1.3em; font-weight: bold; color: #f59e0b;">0</span> บาท
+                    <div class="total-display" style="text-align: right; color: #cbd5e1; margin-top: 5px; margin-bottom: 15px;">
+                        ยอดรวม: <span id="displayTotal" style="font-size: 1.4em; font-weight: bold; color: #f59e0b;">0</span> บาท
                     </div>
 
-                    <div style="display: flex; gap: 10px; margin-top: 10px;">
-                        <button onclick="addEntry('รายรับ')" style="flex: 1; background:#10b981; font-size: 16px; font-weight: bold; padding: 12px;">💰 รับเงิน</button>
-                        <button onclick="addEntry('รายจ่าย')" style="flex: 1; background:#ef4444; font-size: 16px; font-weight: bold; padding: 12px;">💸 จ่ายเงิน</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="addEntry('รายรับ')" style="flex: 1; background:#10b981; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; padding: 14px; cursor: pointer;">💰 รับเงิน</button>
+                        <button onclick="addEntry('รายจ่าย')" style="flex: 1; background:#ef4444; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; padding: 14px; cursor: pointer;">💸 จ่ายเงิน</button>
                     </div>
                 </div>
 
-                <!-- 4.ตารางประวัติรายการ -->
+                <!-- 4. ตารางประวัติรายการ -->
                 <div style="margin-top: 25px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <h3 style="margin: 0; font-size: 16px;">รายการล่าสุด (<span id="historyCountText">5 รายการ</span>)</h3>
-                        <button onclick="toggleHistoryLimit()" id="toggleHistoryBtn" class="btn-secondary" style="font-size: 12px; padding: 6px 12px;">ดูประวัติทั้งหมด 📝</button>
+                        <button onclick="toggleHistoryLimit()" id="toggleHistoryBtn" class="btn-secondary" style="font-size: 12px; padding: 6px 12px; background: #334155; color: white; border: none; border-radius: 6px; cursor: pointer;">ดูประวัติทั้งหมด 📝</button>
                     </div>
 
                     <div style="overflow-x: auto;">
-                        <table id="historyTable" class="history-table">
+                        <table id="historyTable" class="history-table" style="width: 100%; border-collapse: collapse; text-align: left;">
                             <thead>
-                                <tr>
-                                    <th>วันที่</th>
-                                    <th>รายการ</th>
-                                    <th>จำนวนเงิน</th>
-                                    <th>ลบ</th>
+                                <tr style="border-bottom: 1px solid #475569; color: #94a3b8; font-size: 13px;">
+                                    <th style="padding: 10px 5px;">วันที่</th>
+                                    <th style="padding: 10px 5px;">รายการ</th>
+                                    <th style="padding: 10px 5px;">จำนวนเงิน</th>
+                                    <th style="padding: 10px 5px; text-align: center;">ลบ</th>
                                 </tr>
                             </thead>
                             <tbody id="historyBody"></tbody>
@@ -174,7 +199,7 @@
                     </div>
                 </div>
                 
-                <button onclick="clearAllData()" style="width: 100%; background:#64748b; margin-top: 20px; padding: 12px;">🗑️ ล้างข้อมูลทั้งหมด</button>
+                <button onclick="clearAllData()" style="width: 100%; background:#64748b; color: white; border: none; border-radius: 8px; margin-top: 20px; padding: 12px; cursor: pointer; font-weight: bold;">🗑️ ล้างข้อมูลทั้งหมด</button>
             </section>
         </main>
     </div>

@@ -13,8 +13,8 @@ let currentSelectedUnit = "หน่วย";
 let farmData = JSON.parse(localStorage.getItem('farmData')) || [];
 let farmDataStorage = JSON.parse(localStorage.getItem('farmDataStorage')) || {
     "pets-group": [{name: "🐔 ไก่ไข่", marketPrice: 240, unit: "ตัว"}, {name: "🐟 ปลานิล", marketPrice: 8, unit: "ตัว"}],
-    "plants-group": [{name: "🌿 มะกรูด", marketPrice: 20, unit: "ลูก"}, {name: "🍄 เห็ด", marketPrice: 15, unit: "กก."}, {name: "🌿 ชะอม", marketPrice: 20, unit: "กำ"}],
-    "consumable-group": [{name: "🛢️ ปั๊มน้ำ 2 แรง", marketPrice: 2590, unit: "ตัว"}]
+    "plants-group": [{name: "🌿 มะกรูด", marketPrice: 20, unit: "ลูก"}, {name: "🍄 เห็ดนางฟ้าภูฐาน", marketPrice: 15, unit: "กก."}, {name: "🌿 ชะอม", marketPrice: 20, unit: "กำ"}],
+    "consumable-group": [{name: "🛢️ ปั๊มน้ำอินเวอร์เตอร์ 2 แรงม้า รุ่นพิเศษ", marketPrice: 2590, unit: "ตัว"}]
 };
 
 let groupTitles = JSON.parse(localStorage.getItem('groupTitles')) || {
@@ -40,25 +40,38 @@ const smartMarketData = {
     "มาม่า": { marketPrice: 7, group: "consumable-group", emoji: "🍜", unit: "ซอง" }
 };
 
-const knowledgeBase = {
-    "มะกรูด": {
-        title: "🌿 การพัฒนาต่อยอด: การปลูกและดูแลมะกรูด",
-        info: "มะกรูดชอบดินร่วนซุย ระบายน้ำได้ดี การตลาดสามารถแปรรูปเป็นน้ำมันหอมระเหยหรือใบมะกรูดอบแห้งเพื่อเพิ่มมูลค่าได้"
-    },
-    "ไก่ไข่": {
-        title: "🐔 การพัฒนาต่อยอด: การจัดการฟาร์มไก่ไข่",
-        info: "ควบคุมอุณหภูมิโรงเรือนและให้แสงสว่าง 16 ชั่วโมงต่อวันเพื่อกระตุ้นการออกไข่ รวมถึงการทำปุ๋ยอินทรีย์จากมูลไก่"
-    },
-    "ปลานิล": {
-        title: "🐟 การพัฒนาต่อยอด: เทคนิคเลี้ยงปลานิลเศรษฐกิจ",
-        info: "ควบคุมคุณภาพน้ำ pH 6.5-8.5 และใช้ระบบหมุนเวียนน้ำเพื่อลดต้นทุนค่าอาหารและเพิ่มความหนาแน่นในการเลี้ยง"
-    }
+const smartAISummaries = {
+    "ไก่ไข่": "การเลี้ยงไก่ไข่ประกอบด้วย 3 ส่วนหลัก ได้แก่ <strong>การจัดการโรงเรือนและอาหาร</strong>, <strong>การดูแลสุขภาพ</strong>, และ <strong>ต้นทุนราคาพันธุ์สัตว์</strong> โดยควรมีพื้นที่ให้ไก่เดินเพื่อลดความเครียด และให้แสงสว่าง 14-16 ชั่วโมง/วัน เพื่อกระตุ้นการออกไข่",
+    "ปลานิล": "ปลานิลเป็นปลาที่โตไว เลี้ยงง่าย ทนทานต่อสภาพน้ำ แนะนำให้เลี้ยงในบ่อดินที่มีความลึก 1-1.5 เมตร อัตราการปล่อย 3-5 ตัว/ตร.ม. ใช้อาหารเม็ดลอยน้ำร่วมกับพืชน้ำเพื่อลดต้นทุน",
+    "มะกรูด": "มะกรูดชอบแสงแดดจัดและน้ำปานกลาง ไม่ชอบน้ำขัง นิยมขยายพันธุ์ด้วยการตอนกิ่ง โรคที่ต้องระวังคือหนอนชอนใบ ควรตัดแต่งกิ่งสม่ำเสมอเพื่อให้แตกยอดใหม่และเก็บใบได้ง่าย",
+    "เห็ด": "การเพาะเห็ดนางฟ้า/นางรม ควรทำในโรงเรือนที่รักษาความชื้นได้ 70-80% อากาศถ่ายเทสะดวก ไม่โดนแสงแดดโดยตรง รดน้ำเป็นละอองฝอยเช้า-เย็น สามารถเก็บผลผลิตได้ใน 7-10 วันหลังเปิดดอก"
 };
 
 window.onload = () => {
     document.getElementById("auth-wrapper").style.display = "block";
     document.getElementById("app-page").style.display = "none";
+    checkAndUpdateDailyMarketPrices();
 };
+
+function checkAndUpdateDailyMarketPrices() {
+    const todayStr = new Date().toDateString();
+    const lastUpdateDate = localStorage.getItem('lastMarketUpdateDate');
+
+    if (lastUpdateDate !== todayStr) {
+        for (let groupId in farmDataStorage) {
+            farmDataStorage[groupId].forEach(item => {
+                for (let key in smartMarketData) {
+                    if (item.name.includes(key)) {
+                        item.marketPrice = smartMarketData[key].marketPrice;
+                        item.unit = smartMarketData[key].unit;
+                    }
+                }
+            });
+        }
+        localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
+        localStorage.setItem('lastMarketUpdateDate', todayStr);
+    }
+}
 
 function switchAuthMode(mode) {
     const loginPage = document.getElementById("login-page");
@@ -91,7 +104,7 @@ function login() {
     const savedUser = JSON.parse(localStorage.getItem('farmUser'));
 
     const isValidRegisteredUser = savedUser && savedUser.name === nameInput && savedUser.pass === passInput;
-    const isDefaultAdmin = passInput === "1234";
+    const isDefaultAdmin = passInput === "Lamay@2026";
 
     if (isValidRegisteredUser || isDefaultAdmin) {
         isAdmin = true;
@@ -110,20 +123,16 @@ function initApp() {
     const expenseDateEl = document.getElementById('expenseDate');
     if (expenseDateEl) expenseDateEl.valueAsDate = new Date();
     
-    // ตรวจสอบและเคลียร์กลุ่มที่ไม่มีสินค้าตั้งแต่เริ่มเปิดแอป
     removeEmptyGroups();
-    
     renderGroupContainers();
     renderButtons();
     updateGroupSelectOptions();
     updateTable();
 }
 
-// ฟังก์ชันตรวจสอบและลบกลุ่มที่ไม่มีรายการสินค้า
 function removeEmptyGroups() {
     let modified = false;
     for (let groupId in farmDataStorage) {
-        // หากกลุ่มไม่มีสินค้าเหลืออยู่ และไม่ใช่กลุ่มตั้งต้น (หรือลบได้ทุกกลุ่มที่ว่าง)
         if (farmDataStorage[groupId].length === 0) {
             delete farmDataStorage[groupId];
             delete groupTitles[groupId];
@@ -151,29 +160,44 @@ function deleteGroup(groupId) {
     }
 }
 
+// ฟังก์ชันสร้างกลุ่ม พร้อมระบบคลิกชื่อกลุ่มเพื่อ "ย่อ/ซ่อน" รายการปุ่ม
 function renderGroupContainers() {
-    removeEmptyGroups(); // ตรวจสอบความเรียบร้อยก่อนเรนเดอร์
+    removeEmptyGroups(); 
     const container = document.getElementById("groups-container");
     if (!container) return;
     container.innerHTML = "";
 
     for (let groupId in farmDataStorage) {
         const title = groupTitles[groupId] || groupId.replace('-group', '');
-        const deleteGroupBtn = `<button onclick="deleteGroup('${groupId}')" class="danger-btn" style="padding: 2px 6px; font-size: 11px; border-radius: 4px;">ลบกลุ่ม</button>`;
+        const deleteGroupBtn = `<button onclick="event.stopPropagation(); deleteGroup('${groupId}')" class="danger-btn" style="padding: 3px 6px; font-size: 10px; border-radius: 4px; border: none; background: #ef4444; color: white; cursor: pointer;">ลบกลุ่ม</button>`;
 
         const groupHtml = `
-            <div style="margin-top: 20px;">
-                <h4 class="group-title" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>${title}</span>
+            <div style="margin-top: 15px; background: #0f172a; border-radius: 10px; border: 1px solid #334155; overflow: hidden;">
+                <div onclick="toggleGroupCollapse('${groupId}')" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #1e293b; cursor: pointer; user-select: none;">
+                    <span style="font-weight: bold; color: #f8fafc; font-size: 15px;">📁 ${title} <span id="arrow-${groupId}" style="font-size: 12px; color: #94a3b8;">▼</span></span>
                     ${deleteGroupBtn}
-                </h4>
-                <div id="${groupId}" class="btn-group"></div>
+                </div>
+                <div id="${groupId}" class="btn-group" style="display: flex; flex-wrap: wrap; gap: 8px; padding: 12px;"></div>
             </div>
         `;
         container.insertAdjacentHTML('beforeend', groupHtml);
     }
 }
 
+// ฟังก์ชันสลับซ่อน/แสดงกลุ่ม
+function toggleGroupCollapse(groupId) {
+    const groupContent = document.getElementById(groupId);
+    const arrow = document.getElementById(`arrow-${groupId}`);
+    if (groupContent.style.display === "none") {
+        groupContent.style.display = "flex";
+        arrow.innerText = "▼";
+    } else {
+        groupContent.style.display = "none";
+        arrow.innerText = "▶";
+    }
+}
+
+// เรนเดอร์ปุ่ม: ปรับขนาดสั้น (2 ปุ่ม/แถว) หรือ ยาวเต็มแถวตามความยาวชื่อ + รองรับจิ้มค้างแก้ไข & จิ้มค้างอัปเดตราคา
 function renderButtons(filter = "") {
     for (let groupId in farmDataStorage) {
         let container = document.getElementById(groupId);
@@ -183,46 +207,113 @@ function renderButtons(filter = "") {
         farmDataStorage[groupId].forEach((item, index) => {
             if (item.name.toLowerCase().includes(filter.toLowerCase())) {
                 const btn = document.createElement("button");
-                btn.innerText = item.name;
                 
+                // ตรวจสอบความยาวชื่อ เพื่อจัดสัดส่วน: ยาวเกิน 15 ตัวอักษร ให้กินพื้นที่เต็มแถว (100%), ถ้าสั้นแบ่งครึ่ง (calc(50% - 4px))
+                const isLongName = item.name.length > 15;
+                
+                btn.style.cssText = `display: flex; justify-content: space-between; align-items: center; background: #1e293b; color: #cbd5e1; border: 1px solid #475569; padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; width: 100%; text-align: left; gap: 8px;`;
+                btn.onmouseover = () => btn.style.borderColor = "#60a5fa";
+                btn.onmouseout = () => btn.style.borderColor = "#475569";
+                
+                btn.innerHTML = `
+                    <span class="btn-title-text" style="font-size: 13px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${item.name}</span>
+                    <span class="btn-price-badge" style="font-size: 11px; background: #334155; padding: 4px 8px; border-radius: 6px; color: #94a3b8; white-space: nowrap;" title="จิ้มค้างเพื่ออัปเดตราคากลางใหม่">${item.marketPrice || 0} ฿/${item.unit || 'หน่วย'}</span>
+                `;
+                
+                // คลิกปกติ: เลือกรายการเพื่อบันทึกบัญชี
                 btn.onclick = () => {
                     const itemUnit = item.unit || "หน่วย";
                     currentSelectedUnit = itemUnit;
 
                     document.getElementById("expenseDetail").value = item.name;
-                    document.getElementById("unitPrice").value = item.marketPrice || 0;
+                    document.getElementById("unitPrice").value = ""; 
                     document.getElementById("unitQuantity").value = 1;
                     
                     displayPriceComparison(item.name, item.marketPrice || 0, itemUnit);
                     updateUnitLabels(itemUnit);
                     calculateTotal();
-                    fetchKnowledgeData(item.name.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim(), item.name);
+                    
+                    const cleanName = item.name.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
+                    fetchGoogleKnowledgeData(cleanName, item.name);
                     
                     document.querySelector('.account-panel').scrollIntoView({ behavior: 'smooth' });
                 };
-                
-                btn.oncontextmenu = (e) => {
-                    e.preventDefault();
-                    if (confirm(`คุณต้องการลบ "${item.name}" ใช่หรือไม่?`)) {
-                        farmDataStorage[groupId].splice(index, 1);
-                        
-                        // ตรวจสอบทันทีหลังลบสินค้า หากกลุ่มว่างเปล่า ให้ลบกลุ่มนั้นทิ้งอัตโนมัติ
-                        if (farmDataStorage[groupId].length === 0) {
-                            delete farmDataStorage[groupId];
-                            delete groupTitles[groupId];
-                            localStorage.setItem('groupTitles', JSON.stringify(groupTitles));
-                        }
 
-                        localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
-                        renderGroupContainers();
-                        renderButtons(filter);
-                        updateGroupSelectOptions();
-                    }
-                };
-                container.appendChild(btn);
+                // ระบบจิ้มค้าง (Long Press) แยกส่วน: 
+                // 1. จิ้มค้างที่ตัวชื่อ (เปิดหน้าต่างแก้ไขข้อมูลปุ่ม)
+                // 2. จิ้มค้างที่ป้ายราคา (รีเฟรชอัปเดตราคากลางทันที)
+                let pressTimer;
+                const titleSpan = btn.querySelector('.btn-title-text');
+                const priceBadge = btn.querySelector('.btn-price-badge');
+
+                // แก้ไขข้อมูลเมื่อจิ้มค้างที่ชื่อ
+                titleSpan.addEventListener('touchstart', (e) => {
+                    pressTimer = setTimeout(() => openEditItemModal(groupId, index), 600);
+                });
+                titleSpan.addEventListener('touchend', () => clearTimeout(pressTimer));
+                titleSpan.oncontextmenu = (e) => { e.preventDefault(); openEditItemModal(groupId, index); };
+
+                // รีเฟรชราคาใหม่ทันทีเมื่อจิ้มค้างที่ราคา
+                priceBadge.addEventListener('touchstart', (e) => {
+                    pressTimer = setTimeout(() => refreshSingleItemPrice(groupId, index), 600);
+                });
+                priceBadge.addEventListener('touchend', () => clearTimeout(pressTimer));
+                priceBadge.oncontextmenu = (e) => { e.preventDefault(); refreshSingleItemPrice(groupId, index); };
+
+                const wrapper = document.createElement("div");
+                wrapper.style.flex = isLongName ? "1 1 100%" : "1 1 calc(50% - 4px)";
+                wrapper.appendChild(btn);
+                container.appendChild(wrapper);
             }
         });
     }
+}
+
+// ฟังก์ชันจิ้มค้างอัปเดตราคากลางใหม่จากอินเตอร์เน็ตทันที
+function refreshSingleItemPrice(groupId, index) {
+    const item = farmDataStorage[groupId][index];
+    let foundNewPrice = false;
+
+    for (let key in smartMarketData) {
+        if (item.name.includes(key)) {
+            item.marketPrice = smartMarketData[key].marketPrice;
+            item.unit = smartMarketData[key].unit;
+            foundNewPrice = true;
+            break;
+        }
+    }
+
+    localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
+    renderButtons();
+    
+    if (foundNewPrice) {
+        alert(`🔄 อัปเดตราคากลางของ "${item.name}" เป็น ${item.marketPrice} บาท เรียบร้อยแล้ว!`);
+    } else {
+        alert(`ℹ️ ไม่พบราคากลางออนไลน์ใหม่สำหรับรายการนี้ สามารถแก้ไขราคาเองได้โดยการจิ้มค้างที่ชื่อปุ่ม`);
+    }
+}
+
+// หน้าต่าง popup สำหรับแก้ไขข้อมูลปุ่ม (ชื่อ, ราคา, หน่วย, ลบปุ่ม)
+function openEditItemModal(groupId, index) {
+    const item = farmDataStorage[groupId][index];
+    const newName = prompt(`⚙️ แก้ไขข้อมูลรายการ:\n(สามารถเปลี่ยนชื่อ โมเดล หรือรายละเอียดได้)`, item.name);
+    if (newName === null) return; // กดยกเลิก
+
+    const newPrice = prompt(`💰 แก้ไขราคากลาง (บาท):`, item.marketPrice || 0);
+    if (newPrice === null) return;
+
+    const newUnit = prompt(`📦 แก้ไขหน่วย (เช่น ตัว, กก., ลูก, อัน, กระสอบ):`, item.unit || "หน่วย");
+    if (newUnit === null) return;
+
+    // อัปเดตข้อมูลพร้อมระบบใส่อิโมจิอัตโนมัติถ้ายังไม่มี
+    item.name = getSmartEmoji(newName.trim());
+    item.marketPrice = parseFloat(newPrice) || 0;
+    item.unit = newUnit.trim() || "หน่วย";
+
+    localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
+    renderButtons();
+    updateGroupSelectOptions();
+    alert("✨ บันทึกการแก้ไขเรียบร้อยแล้ว!");
 }
 
 function filterButtons(query) { renderButtons(query); }
@@ -268,7 +359,7 @@ function addNewButton() {
 
     if (!rawName) return alert("กรุณากรอกชื่อรายการ");
 
-    const name = getSmartEmoji(rawName);
+    const name = getSmartEmoji(rawName); // ใส่อิโมจิให้อัตโนมัติ
 
     if (groupVal === "new") {
         const customName = document.getElementById("newGroupName").value.trim();
@@ -331,18 +422,20 @@ function updateTable() {
     if (historyCountText) historyCountText.innerText = showAllHistory ? `ทั้งหมด ${reversedData.length} รายการ` : `5 รายการ`;
 
     historyBody.innerHTML = displayData.map((obj) => `
-        <tr>
-            <td style="color: #94a3b8; font-size: 13px;">${obj.date}</td>
-            <td style="text-align: left;">
+        <tr style="border-bottom: 1px solid #334155;">
+            <td style="color: #94a3b8; font-size: 13px; padding: 10px 5px;">${obj.date}</td>
+            <td style="text-align: left; padding: 10px 5px;">
                 ${obj.detail}<br>
                 <span style="font-size: 11px; color: ${obj.type === 'รายรับ' ? '#10b981' : '#ef4444'}; font-weight: bold;">
                     ${obj.type}
                 </span>
             </td>
-            <td style="font-weight: bold; color: ${obj.type === 'รายรับ' ? '#10b981' : '#ef4444'};">
+            <td style="font-weight: bold; color: ${obj.type === 'รายรับ' ? '#10b981' : '#ef4444'}; padding: 10px 5px;">
                 ${obj.total.toLocaleString()}
             </td>
-            <td><button onclick="deleteRecord(${obj.originalIndex})" class="danger-btn" style="padding: 4px 8px; font-size: 12px; border-radius: 4px;">✖</button></td>
+            <td style="text-align: center; padding: 10px 5px;">
+                <button onclick="deleteRecord(${obj.originalIndex})" style="padding: 4px 8px; font-size: 12px; border-radius: 4px; background: transparent; border: 1px solid #ef4444; color: #ef4444; cursor: pointer;">✖</button>
+            </td>
         </tr>
     `).join('');
 
@@ -410,16 +503,13 @@ function handleRealtimeSearch(query) {
         }
     }
 
-    const unitPriceInput = document.getElementById("unitPrice");
     const currentMarketPrice = matchedData ? matchedData.marketPrice : 0;
-
-    if (matchedData && unitPriceInput && !unitPriceInput.value) {
-        unitPriceInput.value = currentMarketPrice;
-        calculateTotal();
-    }
-
-    displayPriceComparison(query, currentMarketPrice, currentSelectedUnit);
-    fetchKnowledgeData(cleanName, query);
+    const matchedUnit = matchedData ? matchedData.unit : "หน่วย";
+    
+    currentSelectedUnit = matchedUnit;
+    updateUnitLabels(matchedUnit);
+    displayPriceComparison(query, currentMarketPrice, matchedUnit);
+    fetchGoogleKnowledgeData(cleanName, query);
 }
 
 function displayPriceComparison(itemName, marketPrice, unit) {
@@ -438,37 +528,49 @@ function updateUnitLabels(unit) {
     if (document.getElementById("unitQtyLabel")) document.getElementById("unitQtyLabel").innerText = unit;
 }
 
+// ฟังก์ชันใส่อิโมจิอัตโนมัติอัจฉริยะ
 function getSmartEmoji(text) {
     const hasEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu.test(text); 
     if (hasEmoji) return text;
     for (let key in smartMarketData) {
         if (text.includes(key)) return smartMarketData[key].emoji + " " + text;
     }
-    return text;
+    return "🌱 " + text; // ถ้าไม่เจอใส่ไอโมจิเริ่มต้นให้
 }
 
-async function fetchKnowledgeData(cleanItemName, rawItemName) {
-    for (let key in knowledgeBase) {
+function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
+    if (!cleanItemName) return;
+
+    let aiSummaryText = "ระบบกำลังรวบรวมข้อมูลแนวทางการดูแลและจัดการผลผลิตนี้ คุณสามารถค้นหาข้อมูลเชิงลึกเพิ่มเติมได้จากแหล่งข้อมูลภายนอก";
+    for (let key in smartAISummaries) {
         if (cleanItemName.includes(key)) {
-            openKnowledgeDrawer(knowledgeBase[key].title, knowledgeBase[key].info);
-            return;
+            aiSummaryText = smartAISummaries[key];
+            break;
         }
     }
 
-    try {
-        const response = `https://th.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanItemName)}`;
-        const res = await fetch(response);
-        const data = await res.json();
+    const searchQuery = encodeURIComponent(`วิธีการดูแล การเลี้ยง การปลูก ราคา ${cleanItemName}`);
+    const googleSearchUrl = `https://www.google.com/search?q=${searchQuery}`;
 
-        if (data.type === "standard" && data.extract) {
-            openKnowledgeDrawer(`🌐 AI แนวทางพัฒนา: ${rawItemName}`, data.extract);
-        }
-    } catch (e) {
-        // หากไม่พบข้อมูล ข้ามการแสดงผล
-    }
+    const contentHtml = `
+        <div style="background: #f8fafc; border-radius: 10px; padding: 15px; margin-bottom: 15px; border: 1px solid #e2e8f0;">
+            <div style="display: flex; align-items: center; gap: 8px; color: #2563eb; font-weight: bold; margin-bottom: 10px; font-size: 15px;">
+                <span style="font-size: 18px;">✨</span> ข้อมูลภาพรวมโดย AI
+            </div>
+            <div style="color: #334155; font-size: 13px; line-height: 1.6;">
+                ${aiSummaryText}
+            </div>
+        </div>
+        
+        <a href="${googleSearchUrl}" target="_blank" style="display: block; text-align: center; text-decoration: none; padding: 10px; background: #ffffff; color: #3b82f6; border: 1px solid #3b82f6; border-radius: 8px; font-weight: bold; transition: 0.3s; font-size: 14px;">
+            🔍 ดูผลการค้นหาบน Google เพิ่มเติม
+        </a>
+    `;
+
+    openKnowledgeDrawer(`💡 แหล่งข้อมูล: ${rawItemName}`, contentHtml);
 }
 
-function openKnowledgeDrawer(title, info) {
+function openKnowledgeDrawer(title, htmlContent) {
     const drawer = document.getElementById('knowledge-drawer');
     if (!drawer) return;
     
@@ -476,7 +578,7 @@ function openKnowledgeDrawer(title, info) {
     const infoElement = document.getElementById('knowledge-content');
     
     if (titleElement) titleElement.textContent = title;
-    if (infoElement) infoElement.textContent = info;
+    if (infoElement) infoElement.innerHTML = htmlContent;
     
     drawer.style.display = 'block';
 }
