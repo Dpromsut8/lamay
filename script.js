@@ -51,7 +51,7 @@ window.onload = () => {
     document.getElementById("auth-wrapper").style.display = "block";
     document.getElementById("app-page").style.display = "none";
     checkAndUpdateDailyMarketPrices();
-    fixPriceAndQuantityLabels();
+    modernizeFormLayout();
 };
 
 function checkAndUpdateDailyMarketPrices() {
@@ -130,43 +130,44 @@ function initApp() {
     renderButtons();
     updateGroupSelectOptions();
     updateTable();
-    fixPriceAndQuantityLabels();
+    modernizeFormLayout();
     initCollapsibleAddItem();
 }
 
-function fixPriceAndQuantityLabels() {
-    const priceLabel = document.getElementById("unitPriceLabel");
-    if (priceLabel) {
-        priceLabel.innerText = 'ราคา';
-    } else {
-        const allElements = document.querySelectorAll('*');
-        allElements.forEach(el => {
-            if (el.children.length === 0 && (el.textContent.includes('ราคาซื้อ/ขาย') || el.textContent.includes('ราคาขาย/ซื้อ') || el.id === 'unitPriceLabel')) {
-                el.innerHTML = 'ราคา';
-                el.id = 'unitPriceLabel';
-            }
-        });
+function modernizeFormLayout() {
+    const priceInput = document.getElementById("unitPrice");
+    if (!priceInput) return;
+
+    let parentSection = priceInput.parentElement;
+    while (parentSection && !parentSection.querySelector('button[onclick*="รับเงิน"]') && !parentSection.querySelector('button[onclick*="addEntry"]')) {
+        parentSection = parentSection.parentElement;
+        if (!parentSection || parentSection === document.body) break;
     }
 
-    const qtyLabel = document.getElementById("unitQtyLabel");
-    if (qtyLabel) {
-        convertToUnitSelector(qtyLabel);
-    } else {
-        const allElements = document.querySelectorAll('*');
-        allElements.forEach(el => {
-            if (el.children.length === 0 && (el.textContent.includes('จำนวน (หน่วย)') || el.textContent.includes('จำนวน (จำนวน') || el.textContent.trim() === 'จำนวน (หน่วย)')) {
-                convertToUnitSelector(el);
-            }
-        });
-    }
-}
+    const priceContainer = priceInput.parentElement;
+    const qtyInput = document.getElementById("unitQuantity") || document.querySelector('input[id*="Quantity"]');
+    if (!qtyInput) return;
+    const qtyContainer = qtyInput.parentElement;
 
-function convertToUnitSelector(labelEl) {
-    labelEl.id = 'unitQtyLabel';
-    const parentContainer = labelEl.parentElement;
-    if (!parentContainer) return;
+    const wrapperGrid = document.createElement("div");
+    wrapperGrid.id = "modern-form-grid";
+    wrapperGrid.style.cssText = "display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0;";
 
-    labelEl.innerHTML = `จำนวน <select id="dynamicUnitSelect" onchange="onManualUnitChange(this.value)" style="background: #1e293b; color: #f8fafc; border: 1px solid #475569; border-radius: 4px; padding: 1px 4px; font-size: 11px; margin-left: 4px; cursor: pointer;">
+    const priceCard = document.createElement("div");
+    priceCard.style.cssText = "background: #0f172a; padding: 8px 10px; border-radius: 8px; border: 1px solid #334155;";
+    priceCard.innerHTML = `<div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px; font-weight: 500;">ราคา</div>`;
+    priceCard.appendChild(priceInput);
+    priceInput.style.width = "100%";
+    priceInput.style.border = "none";
+    priceInput.style.background = "transparent";
+    priceInput.style.color = "#f8fafc";
+    priceInput.style.fontSize = "15px";
+    priceInput.style.fontWeight = "bold";
+
+    const qtyCard = document.createElement("div");
+    qtyCard.style.cssText = "background: #0f172a; padding: 8px 10px; border-radius: 8px; border: 1px solid #334155;";
+    
+    const unitSelectHtml = `<select id="dynamicUnitSelect" onchange="onManualUnitChange(this.value)" style="background: #1e293b; color: #f8fafc; border: 1px solid #475569; border-radius: 4px; padding: 1px 4px; font-size: 11px; float: right; cursor: pointer;">
         <option value="ตัว">ตัว</option>
         <option value="กก.">กก.</option>
         <option value="ลูก">ลูก</option>
@@ -179,6 +180,35 @@ function convertToUnitSelector(labelEl) {
         <option value="อัน">อัน</option>
         <option value="หน่วย" selected>หน่วย</option>
     </select>`;
+
+    qtyCard.innerHTML = `<div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px; font-weight: 500;">จำนวน ${unitSelectHtml}</div>`;
+    qtyCard.appendChild(qtyInput);
+    qtyInput.style.width = "100%";
+    qtyInput.style.border = "none";
+    qtyInput.style.background = "transparent";
+    qtyInput.style.color = "#f8fafc";
+    qtyInput.style.fontSize = "15px";
+    qtyInput.style.fontWeight = "bold";
+
+    wrapperGrid.appendChild(priceCard);
+    wrapperGrid.appendChild(qtyCard);
+
+    const oldPriceLabel = document.getElementById("unitPriceLabel");
+    const oldQtyLabel = document.getElementById("unitQtyLabel");
+    if (oldPriceLabel && oldPriceLabel.parentElement) oldPriceLabel.parentElement.style.display = 'none';
+    if (oldQtyLabel && oldQtyLabel.parentElement) oldQtyLabel.parentElement.style.display = 'none';
+    
+    priceContainer.style.display = 'none';
+    qtyContainer.style.display = 'none';
+
+    if (!document.getElementById("modern-form-grid")) {
+        priceContainer.parentNode.insertBefore(wrapperGrid, priceContainer);
+    }
+
+    const allButtons = document.querySelectorAll('button[onclick*="addEntry"]');
+    allButtons.forEach(btn => {
+        btn.style.cssText = "flex: 1; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 14px; border: none; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);";
+    });
 }
 
 function onManualUnitChange(selectedUnit) {
@@ -220,12 +250,12 @@ function initCollapsibleAddItem() {
 
     const header = document.createElement('div');
     header.id = 'collapsible-add-header';
-    header.style.cssText = "background: #1e293b; color: #f8fafc; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin: 10px 0; border: 1px solid #475569; user-select: none; font-size: 13px;";
+    header.style.cssText = "background: #1e293b; color: #f8fafc; padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin: 10px 0; border: 1px solid #475569; user-select: none; font-size: 13px;";
     header.innerHTML = `<span>➕ เพิ่มรายการสินค้าใหม่</span> <span id="add-collapse-arrow" style="color: #94a3b8;">▶</span>`;
 
     const contentBox = document.createElement('div');
     contentBox.id = 'collapsible-add-box';
-    contentBox.style.cssText = "display: none; background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 10px;";
+    contentBox.style.cssText = "display: none; background: #0f172a; padding: 12px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 10px;";
 
     while (container.firstChild) {
         contentBox.appendChild(container.firstChild);
@@ -285,7 +315,7 @@ function renderGroupContainers() {
         const title = groupTitles[groupId] || groupId.replace('-group', '');
 
         const groupHtml = `
-            <div style="margin-top: 12px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; overflow: hidden;">
+            <div style="margin-top: 12px; background: #0f172a; border-radius: 10px; border: 1px solid #334155; overflow: hidden;">
                 <div id="group-header-${groupId}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #1e293b; cursor: pointer; user-select: none;">
                     <span style="font-weight: bold; color: #f8fafc; font-size: 14px;">📁 ${title} <span id="arrow-${groupId}" style="font-size: 11px; color: #94a3b8;">▼</span></span>
                     <span style="font-size: 10px; color: #64748b;">(จิ้มค้าง 4 วิ เพื่อลบกลุ่ม)</span>
@@ -354,13 +384,13 @@ function renderButtons(filter = "") {
                 const btn = document.createElement("button");
                 const isLongName = item.name.length > 15;
                 
-                btn.style.cssText = `display: flex; justify-content: space-between; align-items: center; background: #1e293b; color: #cbd5e1; border: 1px solid #475569; padding: 8px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s; width: 100%; text-align: left; gap: 6px;`;
+                btn.style.cssText = `display: flex; justify-content: space-between; align-items: center; background: #1e293b; color: #cbd5e1; border: 1px solid #475569; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; width: 100%; text-align: left; gap: 6px;`;
                 btn.onmouseover = () => btn.style.borderColor = "#60a5fa";
                 btn.onmouseout = () => btn.style.borderColor = "#475569";
                 
                 btn.innerHTML = `
                     <span class="btn-title-text" style="font-size: 12px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${item.name}</span>
-                    <span class="btn-price-badge" style="font-size: 10px; background: #334155; padding: 3px 6px; border-radius: 4px; color: #94a3b8; white-space: nowrap;" title="จิ้มค้างเพื่ออัปเดตราคากลางใหม่">${item.marketPrice || 0} ฿/${item.unit || 'หน่วย'}</span>
+                    <span class="btn-price-badge" style="font-size: 10px; background: #334155; padding: 3px 6px; border-radius: 6px; color: #94a3b8; white-space: nowrap;" title="จิ้มค้างเพื่ออัปเดตราคากลางใหม่">${item.marketPrice || 0} ฿/${item.unit || 'หน่วย'}</span>
                 `;
                 
                 btn.onclick = () => {
@@ -730,7 +760,7 @@ async function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
     const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`การดูแลรักษา การเลี้ยงดู การบำรุง หรือวิธีนำไปใช้งานที่ถูกต้อง ${pureSearchName}`)}`;
 
     openKnowledgeDrawer(`💡 ข้อมูล: ${pureSearchName}`, `
-        <div style="background: #1e293b; border-radius: 8px; padding: 10px; margin-bottom: 10px; border: 1px solid #334155; color: #f8fafc;">
+        <div style="background: #1e293b; border-radius: 10px; padding: 10px; margin-bottom: 10px; border: 1px solid #334155; color: #f8fafc;">
             <div style="display: flex; align-items: center; gap: 6px; color: #60a5fa; font-weight: bold; margin-bottom: 6px; font-size: 13px;">
                 <span style="font-size: 15px;">✨</span> ข้อมูลภาพรวมโดย AI / Wikipedia
             </div>
@@ -739,7 +769,7 @@ async function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
             </div>
         </div>
         
-        <a href="${googleSearchUrl}" target="_blank" style="display: block; text-align: center; text-decoration: none; padding: 8px; background: #1e293b; color: #60a5fa; border: 1px solid #475569; border-radius: 6px; font-weight: bold; transition: 0.3s; font-size: 12px;">
+        <a href="${googleSearchUrl}" target="_blank" style="display: block; text-align: center; text-decoration: none; padding: 8px; background: #1e293b; color: #60a5fa; border: 1px solid #475569; border-radius: 8px; font-weight: bold; transition: 0.3s; font-size: 12px;">
             🔍 ดูผลการค้นหาบน Google เพิ่มเติม
         </a>
     `);
