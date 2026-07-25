@@ -609,7 +609,7 @@ function updateTable() {
     const displayData = showAllHistory ? sortedData : sortedData.slice(0, 5);
     
     const historyCountText = document.getElementById("historyCountText");
-    if (historyCountText) historyCountText.innerText = showAllHistory ? `ทั้งหมด ${sortedData.length} รายการ` : `รายการล่าสุด`;
+    if (historyCountText) historyCountText.innerText = showAllHistory ? `ทั้งหมด ${sortedData.length} รายการ` : `รายการใหม่`;
 
     displayData.forEach(item => {
         const tr = document.createElement("tr");
@@ -713,12 +713,12 @@ function getSmartEmoji(text) {
     return text;
 }
 
-function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
+async function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
     if (!rawItemName) return;
 
     const pureSearchName = rawItemName.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA70}-\u{1FAFF}]/gu, '').trim();
 
-    let aiSummaryText = "ระบบกำลังรวบรวมข้อมูลแนวทางการดูแลและจัดการผลผลิตนี้ คุณสามารถค้นหาข้อมูลเชิงลึกเพิ่มเติมได้จากแหล่งข้อมูลภายนอก";
+    let aiSummaryText = "";
     let foundAI = false;
     
     for (let key in smartAISummaries) {
@@ -729,29 +729,43 @@ function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
         }
     }
 
-    if(!foundAI) {
-        aiSummaryText = "ไม่พบข้อมูล AI สรุปสำหรับรายการนี้ แต่สามารถระบุราคาและจำนวนเพื่อบันทึกบัญชีได้ปกติ";
-    }
+    const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`การดูแลรักษา การเลี้ยงดู การบำรุง หรือวิธีนำไปใช้งานที่ถูกต้อง ${pureSearchName}`)}`;
 
-    const searchQuery = encodeURIComponent(`การดูแลรักษา การเลี้ยงดู การบำรุง หรือวิธีนำไปใช้งานที่ถูกต้อง ${pureSearchName}`);
-    const googleSearchUrl = `https://www.google.com/search?q=${searchQuery}`;
-
-    const contentHtml = `
-        <div style="background: #f8fafc; border-radius: 10px; padding: 12px; margin-bottom: 12px; border: 1px solid #e2e8f0;">
-            <div style="display: flex; align-items: center; gap: 8px; color: #2563eb; font-weight: bold; margin-bottom: 8px; font-size: 14px;">
-                <span style="font-size: 16px;">✨</span> ข้อมูลภาพรวมโดย AI
+    openKnowledgeDrawer(`💡 ข้อมูล: ${pureSearchName}`, `
+        <div style="background: #1e293b; border-radius: 10px; padding: 12px; margin-bottom: 12px; border: 1px solid #334155; color: #f8fafc;">
+            <div style="display: flex; align-items: center; gap: 8px; color: #60a5fa; font-weight: bold; margin-bottom: 8px; font-size: 14px;">
+                <span style="font-size: 16px;">✨</span> ข้อมูลภาพรวมโดย AI / Wikipedia
             </div>
-            <div style="color: #334155; font-size: 12px; line-height: 1.5;">
-                ${aiSummaryText}
+            <div id="wiki-summary-content" style="color: #cbd5e1; font-size: 12px; line-height: 1.5;">
+                ${foundAI ? aiSummaryText : 'กำลังดึงข้อมูลจาก Wikipedia...'}
             </div>
         </div>
         
-        <a href="${googleSearchUrl}" target="_blank" style="display: block; text-align: center; text-decoration: none; padding: 8px; background: #ffffff; color: #3b82f6; border: 1px solid #3b82f6; border-radius: 6px; font-weight: bold; transition: 0.3s; font-size: 13px;">
+        <a href="${googleSearchUrl}" target="_blank" style="display: block; text-align: center; text-decoration: none; padding: 10px; background: #1e293b; color: #60a5fa; border: 1px solid #475569; border-radius: 8px; font-weight: bold; transition: 0.3s; font-size: 13px;">
             🔍 ดูผลการค้นหาบน Google เพิ่มเติม
         </a>
-    `;
+    `);
 
-    openKnowledgeDrawer(`💡 ข้อมูล: ${pureSearchName}`, contentHtml);
+    if (!foundAI) {
+        try {
+            const response = await fetch(`https://th.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pureSearchName)}`);
+            if (response.ok) {
+                const data = await response.json();
+                const wikiElem = document.getElementById('wiki-summary-content');
+                if (data && data.extract && wikiElem) {
+                    wikiElem.innerHTML = `${data.extract} <br><br><span style="font-size:10px; color:#94a3b8;">(ที่มา: Wikipedia)</span>`;
+                } else if (wikiElem) {
+                    wikiElem.innerHTML = "ไม่พบข้อมูลสรุปจาก Wikipedia แต่สามารถระบุราคาและจำนวนเพื่อบันทึกบัญชีได้ปกติ";
+                }
+            } else {
+                const wikiElem = document.getElementById('wiki-summary-content');
+                if (wikiElem) wikiElem.innerHTML = "ไม่พบข้อมูลสรุปสำหรับรายการนี้ แต่สามารถระบุราคาและจำนวนเพื่อบันทึกบัญชีได้ปกติ";
+            }
+        } catch (error) {
+            const wikiElem = document.getElementById('wiki-summary-content');
+            if (wikiElem) wikiElem.innerHTML = "ไม่พบข้อมูลสรุปสำหรับรายการนี้ แต่สามารถระบุราคาและจำนวนเพื่อบันทึกบัญชีได้ปกติ";
+        }
+    }
 }
 
 function openKnowledgeDrawer(title, htmlContent) {
