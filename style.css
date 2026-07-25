@@ -1,0 +1,301 @@
+/* ==========================================================================
+   Base & Reset
+   ========================================================================== */
+body {
+    background: #0f172a; 
+    color: #e2e8f0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.page { 
+    width: 100%; 
+    min-height: 100vh; 
+}
+
+/* ==========================================================================
+   Authentication Pages (Login & Register)
+   ========================================================================== */
+.auth-container { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.auth-card {
+    background: #1e293b;
+    padding: 30px 25px;
+    border-radius: 16px;
+    border: 1px solid #334155;
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.4s ease-out;
+}
+
+.auth-card h2 {
+    margin: 0 0 5px 0;
+    color: #ffffff;
+}
+
+.auth-subtitle {
+    color: #94a3b8;
+    font-size: 13px;
+    margin-bottom: 25px;
+}
+
+.auth-switch {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #cbd5e1;
+}
+
+.auth-switch a {
+    color: #60a5fa;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.2s;
+}
+
+.auth-switch a:hover {
+    color: #3b82f6;
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   Header & Layout
+   ========================================================================== */
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1e293b;
+    padding: 15px 25px;
+    border-bottom: 2px solid #334155;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.game-header h1 { margin: 0; font-size: 22px; color: white; letter-spacing: 1px;}
+.game-header p { margin: 5px 0 0 0; font-size: 13px; color: #94a3b8; }
+
+.dashboard-grid {
+    display: flex;
+    flex-wrap: wrap; 
+    gap: 20px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.menu-panel, .account-panel {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    flex: 1; 
+    min-width: 300px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+button {
+    background: #3b82f6; 
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+button:hover { background: #2563eb; transform: translateY(-1px); }
+button:active { transform: translateY(1px); }
+
+.btn-primary { background: #3b82f6; width: 100%; padding: 12px; margin-top: 15px; font-size: 15px; }
+.btn-success { background: #10b981; width: 100%; padding: 12px; margin-top: 15px; font-size: 15px; }
+.btn-success:hover { background: #059669; }
+
+.btn-secondary { background: #334155; border: 1px solid #475569; }
+.btn-secondary:hover { background: #475569; }
+
+.danger-btn { background: #ef4444 !important; }
+.danger-btn:hover { background: #dc2626 !important; }
+
+/* ==========================================================================
+   Inputs & Forms
+   ========================================================================== */
+.input-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+input, select {
+    width: 100%; 
+    padding: 12px;
+    box-sizing: border-box;
+    background: #0f172a;
+    border: 1px solid #475569;
+    color: white;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+input::placeholder { color: #64748b; }
+input:focus, select:focus { outline: none; border-color: #60a5fa; box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2); }
+
+/* ==========================================================================
+   Menu Groups & Items
+   ========================================================================== */
+.group-title {
+    color: #cbd5e1;
+    border-bottom: 1px solid #475569;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    margin-top: 20px;
+    font-size: 15px;
+}
+
+.btn-group {
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
+    gap: 10px; 
+    margin-bottom: 15px;
+}
+
+.btn-group button {
+    width: 100%;
+    background-color: #334155; 
+    color: #e2e8f0;
+    margin: 0;
+    border: 1px solid #475569;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 10px 12px;
+}
+
+.btn-group button:hover { background: #475569; border-color: #60a5fa; }
+
+.editor-box {
+    background: #0f172a; 
+    padding: 20px; 
+    border-radius: 12px; 
+    margin-top: 25px;
+    border: 1px dashed #475569;
+}
+
+/* ==========================================================================
+   Summary & Pricing
+   ========================================================================== */
+.summary-box {
+    background: #0f172a;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #334155;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.summary-box p { margin: 0 0 8px 0; color: #94a3b8; font-size: 14px; }
+.summary-box h3 { margin: 0; font-size: 26px; color: white; }
+
+.price-compare-card {
+    background: #0f172a;
+    border: 1px solid #334155;
+    padding: 12px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #cbd5e1;
+    margin-bottom: 10px;
+}
+
+/* ==========================================================================
+   Knowledge Drawer
+   ========================================================================== */
+.knowledge-frame {
+    background: #1e293b;
+    border: 2px solid #60a5fa;
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.knowledge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+}
+
+.knowledge-header h3 { margin: 0; color: #60a5fa; font-size: 16px; }
+
+.close-icon-btn {
+    background: transparent !important;
+    color: #94a3b8 !important;
+    padding: 4px !important;
+    font-size: 14px;
+}
+
+.close-icon-btn:hover { color: #ef4444 !important; transform: none; }
+
+.knowledge-content {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #cbd5e1;
+}
+
+/* ==========================================================================
+   Table History
+   ========================================================================== */
+.history-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    font-size: 13px;
+    background: #1e293b;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #334155;
+}
+
+.history-table td, .history-table th { 
+    border-bottom: 1px solid #334155; 
+    padding: 12px 10px; 
+    text-align: center;
+    word-break: break-word;
+}
+
+.history-table th {
+    background: #0f172a;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.history-table tr:hover { background: #334155; }
+.history-table tr:last-child td { border-bottom: none; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .price-compare-card { flex-direction: column; gap: 8px; }
+}
