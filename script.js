@@ -1,462 +1,6 @@
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(() => console.log('Service Worker Registered'))
-    .catch((err) => console.log('Service Worker Failed', err));
-}
-
-let isAdmin = false;
-let showAllHistory = false;
-let typingTimer;
-const DEBOUNCE_DELAY = 800;
-let currentSelectedUnit = "หน่วย";
-
-let farmData = JSON.parse(localStorage.getItem('farmData')) || [];
-let database.js = JSON.parse(localStorage.getItem('database.js')) || {
-    "pets-group": [{name: "🐔 ไก่ไข่", marketPrice: 240, unit: "ตัว"}, {name: "🐟 ปลานิล", marketPrice: 8, unit: "ตัว"}],
-    "plants-group": [{name: "🌿 มะกรูด", marketPrice: 20, unit: "ลูก"}, {name: "🍄 เห็ดนางฟ้าภูฐาน", marketPrice: 15, unit: "กก."}, {name: "🌿 ชะอม", marketPrice: 20, unit: "กำ"}],
-    "consumable-group": [{name: "🛢️ ปั๊มน้ำอินเวอร์เตอร์ 2 แรงม้า", marketPrice: 2590, unit: "ตัว"}]
-};
-
-let groupTitles = JSON.parse(localStorage.getItem('groupTitles')) || {
-    "pets-group": "สัตว์เลี้ยง",
-    "plants-group": "พืชสวน",
-    "consumable-group": "วัสดุสิ้นเปลือง"
-};
-
-const database.js = {
-    "มะกรูด": { marketPrice: 20, group: "plants-group", emoji: "🌿", unit: "ลูก" },
-    "มะนาว": { marketPrice: 4, group: "plants-group", emoji: "🍋", unit: "ลูก" },
-    "มะละกอ": { marketPrice: 25, group: "plants-group", emoji: "🥭", unit: "ลูก" },
-    "ทุเรียน": { marketPrice: 180, group: "plants-group", emoji: "🌳", unit: "กก." },
-    "เห็ด": { marketPrice: 15, group: "plants-group", emoji: "🍄", unit: "กก." },
-    "ชะอม": { marketPrice: 20, group: "plants-group", emoji: "🌿", unit: "กำ" },
-    "ไก่": { marketPrice: 240, group: "pets-group", emoji: "🐔", unit: "ตัว" },
-    "ปลา": { marketPrice: 8, group: "pets-group", emoji: "🐟", unit: "ตัว" },
-    "ไข่": { marketPrice: 130, group: "pets-group", emoji: "🥚", unit: "แผง" },
-    "อาหาร": { marketPrice: 460, group: "consumable-group", emoji: "🌾", unit: "กระสอบ" },
-    "น้ำมัน": { marketPrice: 33, group: "consumable-group", emoji: "🛢️", unit: "ถุง" },
-    "สายไฟ": { marketPrice: 680, group: "consumable-group", emoji: "⚡", unit: "ม้วน" },
-    "ปั๊มน้ำ": { marketPrice: 2590, group: "consumable-group", emoji: "⚙️", unit: "ตัว" },
-    "มาม่า": { marketPrice: 7, group: "consumable-group", emoji: "🍜", unit: "ซอง" }
-};
-
-const smartAISummaries = {
-    "ไก่ไข่": "การเลี้ยงไก่ไข่ประกอบด้วย 3 ส่วนหลัก ได้แก่ <strong>การจัดการโรงเรือนและอาหาร</strong>, <strong>การดูแลสุขภาพ</strong>, และ <strong>ต้นทุนราคาพันธุ์สัตว์</strong> ควรมีพื้นที่ให้ไก่เดินเพื่อลดความเครียด และให้แสงสว่าง 14-16 ชั่วโมง/วัน",
-    "ปลานิล": "ปลานิลเป็นปลาที่โตไว เลี้ยงง่าย ทนทานต่อสภาพน้ำ แนะนำให้เลี้ยงในบ่อดินลึก 1-1.5 เมตร อัตราปล่อย 3-5 ตัว/ตร.ม.",
-    "มะกรูด": "มะกรูดชอบแสงแดดจัดและน้ำปานกลาง ไม่ชอบน้ำขัง ขยายพันธุ์ด้วยการตอนกิ่ง ระวังหนอนชอนใบ",
-    "เห็ด": "การเพาะเห็ดนางฟ้า/นางรม ควรทำในโรงเรือนรักษาความชื้น 70-80% อากาศถ่ายเทสะดวก รดน้ำเช้า-เย็น เก็บผลผลิตได้ใน 7-10 วัน"
-};
-
-window.onload = () => {
-    document.getElementById("auth-wrapper").style.display = "block";
-    document.getElementById("app-page").style.display = "none";
-    checkAndUpdateDailyMarketPrices();
-};
-
-function checkAndUpdateDailyMarketPrices() {
-    const todayStr = new Date().toDateString();
-    const lastUpdateDate = localStorage.getItem('lastMarketUpdateDate');
-
-    if (lastUpdateDate !== todayStr) {
-        for (let groupId in database.js) {
-            database.js[groupId].forEach(item => {
-                for (let key in database.js) {
-                    if (item.name.includes(key)) {
-                        item.marketPrice = database.js[key].marketPrice;
-                        item.unit = database.js[key].unit;
-                    }
-                }
-            });
-        }
-        localStorage.setItem('database.js', JSON.stringify(database.js));
-        localStorage.setItem('lastMarketUpdateDate', todayStr);
-    }
-}
-
-function switchAuthMode(mode) {
-    const loginPage = document.getElementById("login-page");
-    const regPage = document.getElementById("register-page");
-    
-    if (mode === 'login') {
-        if(loginPage) loginPage.style.display = "block";
-        if(regPage) regPage.style.display = "none";
-    } else {
-        if(loginPage) loginPage.style.display = "none";
-        if(regPage) regPage.style.display = "block";
-    }
-}
-
-function register() {
-    const name = document.getElementById("regNameInput").value.trim();
-    const pass = document.getElementById("regPassInput").value;
-    const confirmPass = document.getElementById("regConfirmPassInput").value;
-
-    if (!name || !pass) return alert("กรุณากรอกชื่อผู้ใช้งานและรหัสผ่านให้ครบถ้วน");
-    if (pass !== confirmPass) return alert("รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน!");
-
-    localStorage.setItem('farmUser', JSON.stringify({ name, pass }));
-    alert("สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ");
-    switchAuthMode('login');
-}
-
-function login() {
-    const nameInput = document.getElementById("loginNameInput").value.trim();
-    const passInput = document.getElementById("loginPassInput").value;
-    const savedUser = JSON.parse(localStorage.getItem('farmUser'));
-
-    const isValidRegisteredUser = savedUser && savedUser.name === nameInput && savedUser.pass === passInput;
-    const isDefaultAdmin = (nameInput === "admin" && passInput === "1234");
-
-    if (isValidRegisteredUser || isDefaultAdmin) {
-        isAdmin = true;
-        document.getElementById("auth-wrapper").style.display = "none";
-        document.getElementById("app-page").style.display = "block";
-        document.getElementById("displayName").innerText = isValidRegisteredUser ? savedUser.name : "ผู้ดูแลระบบ (Admin)";
-        initApp();
-    } else {
-        alert("ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง!");
-    }
-}
-
-function logout() { location.reload(); }
-
-function initApp() {
-    const expenseDateEl = document.getElementById('expenseDate');
-    if (expenseDateEl) expenseDateEl.valueAsDate = new Date();
-    
-    removeEmptyGroups();
-    renderGroupContainers();
-    renderButtons();
-    updateGroupSelectOptions();
-    updateTable();
-    initCollapsibleAddItem();
-}
-
-function onManualUnitChange(selectedUnit) {
-    currentSelectedUnit = selectedUnit;
-}
-
-function updateUnitLabels(unit) {
-    currentSelectedUnit = unit || "หน่วย";
-    const unitSelect = document.getElementById("dynamicUnitSelect");
-    if (unitSelect) {
-        let found = false;
-        for (let i = 0; i < unitSelect.options.length; i++) {
-            if (unitSelect.options[i].value === currentSelectedUnit) {
-                unitSelect.selectedIndex = i;
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            const opt = document.createElement("option");
-            opt.value = currentSelectedUnit;
-            opt.innerText = currentSelectedUnit;
-            unitSelect.appendChild(opt);
-            unitSelect.value = currentSelectedUnit;
-        }
-    }
-}
-
-function initCollapsibleAddItem() {
-    const itemNameInput = document.getElementById('newItemName');
-    if (!itemNameInput || document.getElementById('collapsible-add-header')) return;
-
-    let container = itemNameInput.parentElement;
-    while (container && !container.querySelector('button[onclick*="addNewButton"]')) {
-        container = container.parentElement;
-        if (!container || container === document.body) break;
-    }
-    if (!container) container = itemNameInput.parentElement.parentElement;
-
-    const header = document.createElement('div');
-    header.id = 'collapsible-add-header';
-    header.style.cssText = "background: #1e293b; color: #f8fafc; padding: 12px 16px; border-radius: 12px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin: 12px 0; border: 1px solid #475569; user-select: none; font-size: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); transition: all 0.2s;";
-    header.innerHTML = `<span>➕ เพิ่มรายการสินค้าใหม่</span> <span id="add-collapse-arrow" style="color: #94a3b8; font-size: 12px;">▼</span>`;
-
-    const contentBox = document.createElement('div');
-    contentBox.id = 'collapsible-add-box';
-    contentBox.style.cssText = "display: none; background: #0f172a; padding: 14px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 12px;";
-
-    while (container.firstChild) {
-        contentBox.appendChild(container.firstChild);
-    }
-
-    const parent = container.parentNode;
-    parent.insertBefore(header, container);
-    parent.insertBefore(contentBox, container);
-    container.remove();
-
-    header.onclick = () => {
-        if (contentBox.style.display === "none") {
-            contentBox.style.display = "block";
-            document.getElementById('add-collapse-arrow').innerText = "▲";
-        } else {
-            contentBox.style.display = "none";
-            document.getElementById('add-collapse-arrow').innerText = "▼";
-        }
-    };
-}
-
-function removeEmptyGroups() {
-    let modified = false;
-    for (let groupId in database.js) {
-        if (database.js[groupId].length === 0) {
-            delete database.js[groupId];
-            delete groupTitles[groupId];
-            modified = true;
-        }
-    }
-    if (modified) {
-        localStorage.setItem('database.js', JSON.stringify(database.js));
-        localStorage.setItem('groupTitles', JSON.stringify(groupTitles));
-    }
-}
-
-function deleteGroup(groupId) {
-    if (confirm(`คุณต้องการลบกลุ่ม "${groupTitles[groupId] || groupId}" และสินค้าทั้งหมดในกลุ่มนี้ใช่หรือไม่?`)) {
-        delete database.js[groupId];
-        if (groupTitles[groupId]) {
-            delete groupTitles[groupId];
-            localStorage.setItem('groupTitles', JSON.stringify(groupTitles));
-        }
-        localStorage.setItem('database.js', JSON.stringify(database.js));
-
-        renderGroupContainers();
-        renderButtons();
-        updateGroupSelectOptions();
-    }
-}
-
-function renderGroupContainers() {
-    removeEmptyGroups(); 
-    const container = document.getElementById("groups-container");
-    if (!container) return;
-    container.innerHTML = "";
-
-    for (let groupId in database.js) {
-        const title = groupTitles[groupId] || groupId.replace('-group', '');
-
-        const groupHtml = `
-            <div style="margin-top: 12px; background: #0f172a; border-radius: 10px; border: 1px solid #334155; overflow: hidden;">
-                <div id="group-header-${groupId}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #1e293b; cursor: pointer; user-select: none;">
-                    <span style="font-weight: bold; color: #f8fafc; font-size: 14px;">📁 ${title} <span id="arrow-${groupId}" style="font-size: 11px; color: #94a3b8;">▼</span></span>
-                    <span style="font-size: 10px; color: #64748b;">(จิ้มค้าง 4 วิ เพื่อลบกลุ่ม)</span>
-                </div>
-                <div id="${groupId}" class="btn-group" style="display: flex; flex-wrap: wrap; gap: 6px; padding: 10px;"></div>
-            </div>
-        `;
-        container.insertAdjacentHTML('beforeend', groupHtml);
-        
-        setTimeout(() => {
-            const headerEl = document.getElementById(`group-header-${groupId}`);
-            if (!headerEl) return;
-            
-            let groupPressTimer;
-            let isLongPress = false;
-
-            const startPress = () => {
-                isLongPress = false;
-                groupPressTimer = setTimeout(() => {
-                    isLongPress = true;
-                    deleteGroup(groupId);
-                }, 4000);
-            };
-
-            const cancelPress = () => { clearTimeout(groupPressTimer); };
-
-            headerEl.addEventListener('mousedown', startPress);
-            headerEl.addEventListener('mouseup', cancelPress);
-            headerEl.addEventListener('touchstart', startPress);
-            headerEl.addEventListener('touchend', cancelPress);
-            headerEl.addEventListener('touchmove', cancelPress);
-
-            headerEl.addEventListener('click', (e) => {
-                if (isLongPress) {
-                    e.stopImmediatePropagation();
-                    return;
-                }
-                toggleGroupCollapse(groupId);
-            });
-        }, 0);
-    }
-}
-
-function toggleGroupCollapse(groupId) {
-    const groupContent = document.getElementById(groupId);
-    const arrow = document.getElementById(`arrow-${groupId}`);
-    if (groupContent.style.display === "none") {
-        groupContent.style.display = "flex";
-        arrow.innerText = "▼";
-    } else {
-        groupContent.style.display = "none";
-        arrow.innerText = "▶";
-    }
-}
-
-function renderButtons(filter = "") {
-    for (let groupId in database.js) {
-        let container = document.getElementById(groupId);
-        if (!container) continue;
-        container.innerHTML = "";
-
-        database.js[groupId].forEach((item, index) => {
-            if (item.name.toLowerCase().includes(filter.toLowerCase())) {
-                const btn = document.createElement("button");
-                const isLongName = item.name.length > 15;
-                
-                btn.style.cssText = `display: flex; justify-content: space-between; align-items: center; background: #1e293b; color: #cbd5e1; border: 1px solid #475569; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; width: 100%; text-align: left; gap: 6px;`;
-                btn.onmouseover = () => btn.style.borderColor = "#60a5fa";
-                btn.onmouseout = () => btn.style.borderColor = "#475569";
-                
-                btn.innerHTML = `
-                    <span class="btn-title-text" style="font-size: 12px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${item.name}</span>
-                    <span class="btn-price-badge" style="font-size: 10px; background: #334155; padding: 3px 6px; border-radius: 6px; color: #94a3b8; white-space: nowrap;" title="จิ้มค้างเพื่ออัปเดตราคากลาง">${item.marketPrice || 0} ฿/${item.unit || 'หน่วย'}</span>
-                `;
-                
-                // เมื่อคลิกปุ่มสินค้า -> กรอกข้อมูลอัตโนมัติ + เลื่อนหน้าจอไปที่บัญชีฟาร์ม
-                btn.onclick = () => {
-                    const itemUnit = item.unit || "หน่วย";
-                    currentSelectedUnit = itemUnit;
-
-                    document.getElementById("expenseDetail").value = item.name;
-                    document.getElementById("unitPrice").value = item.marketPrice || ""; 
-                    document.getElementById("unitQuantity").value = 1;
-                    
-                    displayPriceComparison(item.name, item.marketPrice || 0, itemUnit);
-                    updateUnitLabels(itemUnit);
-                    calculateTotal();
-                    
-                    const cleanName = item.name.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
-                    fetchGoogleKnowledgeData(cleanName, item.name);
-                    
-                    // สั่งเลื่อนหน้าจออัตโนมัติไปยังส่วนบัญชีฟาร์มด้านขวา
-                    const accountPanel = document.querySelector('.account-panel');
-                    if (accountPanel) {
-                        accountPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                };
-
-                let pressTimer;
-                const titleSpan = btn.querySelector('.btn-title-text');
-                const priceBadge = btn.querySelector('.btn-price-badge');
-
-                titleSpan.addEventListener('touchstart', () => {
-                    pressTimer = setTimeout(() => openEditItemModal(groupId, index), 600);
-                });
-                titleSpan.addEventListener('touchend', () => clearTimeout(pressTimer));
-                titleSpan.oncontextmenu = (e) => { e.preventDefault(); openEditItemModal(groupId, index); };
-
-                priceBadge.addEventListener('touchstart', () => {
-                    pressTimer = setTimeout(() => refreshSingleItemPrice(groupId, index), 600);
-                });
-                priceBadge.addEventListener('touchend', () => clearTimeout(pressTimer));
-                priceBadge.oncontextmenu = (e) => { e.preventDefault(); refreshSingleItemPrice(groupId, index); };
-
-                const wrapper = document.createElement("div");
-                wrapper.style.cssText = `flex: ${isLongName ? "1 1 100%" : "1 1 calc(50% - 4px)"}; cursor: grab;`;
-                wrapper.setAttribute("data-index", index);
-                wrapper.appendChild(btn);
-                container.appendChild(wrapper);
-            }
-        });
-
-        if (typeof Sortable !== 'undefined') {
-            Sortable.create(container, {
-                animation: 150,
-                delay: 400,
-                delayOnTouchOnly: true,
-                touchStartThreshold: 5,
-                onEnd: function (evt) {
-                    const newOrder = [];
-                    container.querySelectorAll('[data-index]').forEach(el => {
-                        const originalIndex = parseInt(el.getAttribute('data-index'));
-                        newOrder.push(database.js[groupId][originalIndex]);
-                    });
-                    database.js[groupId] = newOrder;
-                    localStorage.setItem('database.js', JSON.stringify(database.js));
-                    renderButtons(filter);
-                }
-            });
-        }
-    }
-}
-
-function refreshSingleItemPrice(groupId, index) {
-    const item = database.js[groupId][index];
-    let foundNewPrice = false;
-
-    for (let key in database.js) {
-        if (item.name.includes(key)) {
-            item.marketPrice = database.js[key].marketPrice;
-            item.unit = database.js[key].unit;
-            foundNewPrice = true;
-            break;
-        }
-    }
-
-    localStorage.setItem('database.js', JSON.stringify(database.js));
-    renderButtons();
-    
-    if (foundNewPrice) {
-        alert(`🔄 อัปเดตราคากลางของ "${item.name}" เป็น ${item.marketPrice} บาท เรียบร้อยแล้ว!`);
-    } else {
-        alert(`ℹ️ ไม่พบราคากลางออนไลน์ใหม่ สามารถแก้ไขราคาเองได้โดยจิ้มค้างที่ชื่อปุ่ม`);
-    }
-}
-
-function openEditItemModal(groupId, index) {
-    const item = database.js[groupId][index];
-    const newName = prompt(`⚙️ แก้ไขข้อมูลรายการ:`, item.name);
-    if (newName === null) return;
-
-    const newPrice = prompt(`💰 แก้ไขราคากลาง (บาท):`, item.marketPrice || 0);
-    if (newPrice === null) return;
-
-    const newUnit = prompt(`📦 แก้ไขหน่วย (เช่น ตัว, กก., ลูก, อัน):`, item.unit || "หน่วย");
-    if (newUnit === null) return;
-
-    item.name = getSmartEmoji(newName.trim());
-    item.marketPrice = parseFloat(newPrice) || 0;
-    item.unit = newUnit.trim() || "หน่วย";
-
-    localStorage.setItem('database.js', JSON.stringify(database.js));
-    renderButtons();
-    updateGroupSelectOptions();
-    alert("✨ บันทึกการแก้ไขเรียบร้อยแล้ว!");
-}
-
-function filterButtons(query) { renderButtons(query); }
-
-function updateGroupSelectOptions() {
-    const select = document.getElementById("groupSelect");
-    if (!select) return;
-    select.innerHTML = "";
-    
-    for (let groupId in database.js) {
-        const title = groupTitles[groupId] || groupId.replace('-group', '');
-        const option = document.createElement("option");
-        option.value = groupId;
-        option.innerText = `กลุ่ม: ${title}`;
-        select.appendChild(option);
-    }
-    
-    const newOpt = document.createElement("option");
-    newOpt.value = "new";
-    newOpt.innerText = "-- สร้างกลุ่มใหม่ --";
-    select.appendChild(newOpt);
-}
-
-function toggleNewGroupInput(val) { 
-    const groupNameEl = document.getElementById('newGroupName');
-    if (groupNameEl) groupNameEl.style.display = (val === 'new') ? 'block' : 'none'; 
-}
-
-function toggleCustomUnitInput(val) {
-    const customInput = document.getElementById("customUnitName");
-    if (customInput) customInput.style.display = (val === 'custom') ? 'block' : 'none';
-}
-
+// ==========================================
+// 1. SERVICE WORKER & GLOBAL VARIABLES
+// ==========================================
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
     .then(() => console.log('Service Worker Registered'))
@@ -471,7 +15,7 @@ let currentSelectedUnit = "หน่วย";
 
 let farmData = JSON.parse(localStorage.getItem('farmData')) || [];
 
-// แก้ไขชื่อตัวแปรจาก database.js เป็น farmItemsDB
+// จัดการฐานข้อมูลรายการสินค้าในฟาร์ม
 let farmItemsDB = JSON.parse(localStorage.getItem('farmItemsDB')) || {
     "pets-group": [{name: "🐔 ไก่ไข่", marketPrice: 240, unit: "ตัว"}, {name: "🐟 ปลานิล", marketPrice: 8, unit: "ตัว"}],
     "plants-group": [{name: "🌿 มะกรูด", marketPrice: 20, unit: "ลูก"}, {name: "🍄 เห็ดนางฟ้าภูฐาน", marketPrice: 15, unit: "กก."}, {name: "🌿 ชะอม", marketPrice: 20, unit: "กำ"}],
@@ -484,7 +28,7 @@ let groupTitles = JSON.parse(localStorage.getItem('groupTitles')) || {
     "consumable-group": "วัสดุสิ้นเปลือง"
 };
 
-// แก้ไขชื่อตัวแปรจาก database.js เป็น marketPricesDB
+// ฐานข้อมูลราคากลางอ้างอิง
 const marketPricesDB = {
     "มะกรูด": { marketPrice: 20, group: "plants-group", emoji: "🌿", unit: "ลูก" },
     "มะนาว": { marketPrice: 4, group: "plants-group", emoji: "🍋", unit: "ลูก" },
@@ -509,6 +53,10 @@ const smartAISummaries = {
     "เห็ด": "การเพาะเห็ดนางฟ้า/นางรม ควรทำในโรงเรือนรักษาความชื้น 70-80% อากาศถ่ายเทสะดวก รดน้ำเช้า-เย็น เก็บผลผลิตได้ใน 7-10 วัน"
 };
 
+
+// ==========================================
+// 2. INITIALIZATION & AUTHENTICATION
+// ==========================================
 window.onload = () => {
     document.getElementById("auth-wrapper").style.display = "block";
     document.getElementById("app-page").style.display = "none";
@@ -557,6 +105,9 @@ function register() {
     if (pass !== confirmPass) return alert("รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน!");
 
     localStorage.setItem('farmUser', JSON.stringify({ name, pass }));
+    localStorage.setItem('lamay_registered', 'true');
+    localStorage.setItem('lamay_user', name);
+    
     alert("สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ");
     switchAuthMode('login');
 }
@@ -594,6 +145,10 @@ function initApp() {
     initCollapsibleAddItem();
 }
 
+
+// ==========================================
+// 3. UI & PRODUCT MANAGEMENT
+// ==========================================
 function onManualUnitChange(selectedUnit) {
     currentSelectedUnit = selectedUnit;
 }
@@ -957,6 +512,10 @@ function addNewButton() {
     document.getElementById("newGroupName").style.display = "none";
 }
 
+
+// ==========================================
+// 4. ACCOUNTING & FINANCIAL MANAGEMENT
+// ==========================================
 function addEntry(type) {
     const dateInput = document.getElementById("expenseDate").value;
     const detail = document.getElementById("expenseDetail").value.trim();
@@ -1083,6 +642,10 @@ function clearAllData() {
     } 
 }
 
+
+// ==========================================
+// 5. SEARCH, KNOWLEDGE & AI HELPERS
+// ==========================================
 function onTypeDebounce(inputElement) {
     clearTimeout(typingTimer);
     typingTimer = setTimeout(() => {
@@ -1175,100 +738,4 @@ function openKnowledgeDrawer(title, htmlContent) {
 function closeDrawer() {
     const drawer = document.getElementById('knowledge-drawer');
     if (drawer) drawer.style.display = 'none';
-}
-// ตรวจสอบสถานะและทำงานเมื่อหน้าเว็บโหลดเสร็จ
-window.addEventListener('DOMContentLoaded', () => {
-    // สามารถใส่การตั้งค่าเริ่มต้นเพิ่มเติมได้ที่นี่
-});
-
-// ฟังก์ชันเมื่อผู้ใช้กดแตะที่หน้าจอแรก (Splash Screen)
-function proceedToAuth() {
-    const splash = document.getElementById('splash-screen');
-    splash.style.opacity = '0';
-    
-    setTimeout(() => {
-        splash.style.display = 'none';
-        
-        // ตรวจสอบว่าเคยสมัครหรือล็อกอินไว้ก่อนหน้านี้หรือไม่
-        const isRegistered = localStorage.getItem('lamay_registered');
-        const savedUser = localStorage.getItem('lamay_user') || 'สมาชิก LAMAY';
-
-        if (isRegistered === 'true') {
-            // หากเป็นครั้งที่ 2 เป็นต้นไป แสดงหน้า 1-Click พร้อมโลโก้
-            document.getElementById('user-display-name').innerText = savedUser;
-            showContainer('one-click-view');
-        } else {
-            // ครั้งแรก ให้ไปที่หน้าสมัครสมาชิก
-            showContainer('signup-view');
-        }
-    }, 800);
-}
-
-// ฟังก์ชันจัดการการแสดงผลของหน้าต่าง (Container) พร้อมแอนิเมชันเปิดใช้งาน
-function showContainer(containerId) {
-    document.querySelectorAll('.main-container').forEach(el => {
-        el.style.display = 'none';
-        el.classList.remove('active');
-    });
-    
-    const target = document.getElementById(containerId);
-    target.style.display = 'block';
-    setTimeout(() => {
-        target.classList.add('active');
-    }, 50);
-}
-
-// ฟังก์ชันสลับระหว่างหน้าสมัครสมาชิกและหน้าล็อกอินปกติ
-function switchView(type) {
-    if (type === 'login') {
-        showContainer('login-view');
-    } else {
-        showContainer('signup-view');
-    }
-}
-
-// จัดการเมื่อกดสมัครสมาชิกครั้งแรก
-function handleSignup(event) {
-    event.preventDefault();
-    const nameInput = event.target.querySelector('input[type="text"]').value || 'สมาชิกใหม่ LAMAY';
-    
-    // บันทึกสถานะว่าเคยสมัครแล้ว
-    localStorage.setItem('lamay_registered', 'true');
-    localStorage.setItem('lamay_user', nameInput);
-    
-    alert('สมัครสมาชิกสำเร็จ!');
-    
-    // พาไปหน้า 1-Click สำหรับการใช้งานครั้งถัดไป
-    showContainer('one-click-view');
-    document.getElementById('user-display-name').innerText = nameInput;
-}
-
-// จัดการเมื่อล็อกอินด้วยอีเมล/รหัสผ่านปกติ
-function handleLogin(event) {
-    event.preventDefault();
-    const emailInput = document.getElementById('login-email').value;
-    
-    // บันทึกสถานะการล็อกอิน
-    localStorage.setItem('lamay_registered', 'true');
-    localStorage.setItem('lamay_user', emailInput);
-    
-    alert('เข้าสู่ระบบสำเร็จ!');
-    
-    // พาไปหน้า 1-Click สำหรับครั้งถัดไป
-    showContainer('one-click-view');
-    document.getElementById('user-display-name').innerText = emailInput;
-}
-
-// ฟังก์ชันเข้าสู่ระบบใน 1 Click (สำหรับครั้งที่ 2 เป็นต้นไป)
-function executeOneClickLogin() {
-    alert('เข้าสู่ระบบสำเร็จใน 1 คลิก ยินดีต้อนรับกลับสู่ LAMAY ครับ!');
-    // [จุดเชื่อมต่อ] สามารถเขียนโค้ด redirect ไปหน้า Dashboard หลักของแอปได้ที่นี่
-    // เช่น window.location.href = 'dashboard.html';
-}
-
-// ฟังก์ชันสำหรับเคลียร์ข้อมูลจำลอง (เผื่อต้องการทดสอบระบบสมัครใหม่อีกครั้ง)
-function resetToFirstTime() {
-    localStorage.clear();
-    alert('รีเซ็ตข้อมูลจำลองเรียบร้อย กลับสู่หน้าสมัครสมาชิกครั้งแรก');
-    showContainer('signup-view');
 }

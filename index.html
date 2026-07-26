@@ -3,464 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LAMAY - Authentication</title>
-    <style>
-        :root {
-            --bg-color: #FDFBF7; /* สีขาวนวล */
-            --text-color: #2C2C2C;
-            --accent-color: #D4AF37; /* สีทองหรูหราแบบละมุน */
-            --accent-hover: #C5A028;
-            --gray-light: #F4F1EA;
-            --gray-text: #777777;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        /* หน้าจอหลัก (Splash & Ripple Screen) */
-        #splash-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            cursor: pointer;
-            transition: opacity 0.8s ease;
-        }
-
-        /* เอฟเฟกต์หยดน้ำกระเพื่อม */
-        .ripple-container {
-            position: absolute;
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .ripple {
-            position: absolute;
-            border: 2px solid rgba(212, 175, 55, 0.4);
-            border-radius: 50%;
-            animation: ripple-effect 2.5s infinite cubic-bezier(0.1, 0.8, 0.3, 1);
-        }
-
-        .ripple:nth-child(2) {
-            animation-delay: 0.8s;
-        }
-
-        .ripple:nth-child(3) {
-            animation-delay: 1.6s;
-        }
-
-        @keyframes ripple-effect {
-            0% {
-                width: 50px;
-                height: 50px;
-                opacity: 1;
-            }
-            100% {
-                width: 350px;
-                height: 350px;
-                opacity: 0;
-            }
-        }
-
-        /* โลโก้กลางจอ */
-        .logo-container {
-            position: relative;
-            z-index: 10;
-            text-align: center;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        .logo-text {
-            font-size: 3.5rem;
-            font-weight: 300;
-            letter-spacing: 8px;
-            color: var(--text-color);
-            margin-bottom: 10px;
-        }
-
-        .logo-sub {
-            font-size: 0.9rem;
-            letter-spacing: 4px;
-            color: var(--gray-text);
-            text-transform: uppercase;
-        }
-
-        .tap-hint {
-            position: absolute;
-            bottom: 60px;
-            font-size: 0.9rem;
-            color: var(--gray-text);
-            letter-spacing: 1px;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 1; }
-        }
-
-        /* คอนเทนต์หลัก (ซ่อนไว้ก่อน) */
-        .main-container {
-            display: none;
-            width: 100%;
-            max-width: 420px;
-            padding: 30px;
-            background: #FFFFFF;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-            text-align: center;
-            opacity: 0;
-            transform: scale(0.95);
-            transition: all 0.5s ease;
-        }
-
-        .main-container.active {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        .card-logo {
-            font-size: 2rem;
-            letter-spacing: 5px;
-            margin-bottom: 25px;
-            color: var(--text-color);
-        }
-
-        /* ฟอร์มและปุ่มต่างๆ */
-        .form-group {
-            margin-bottom: 15px;
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 0.85rem;
-            color: var(--gray-text);
-            margin-bottom: 5px;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #E0DCD0;
-            border-radius: 10px;
-            background-color: var(--gray-light);
-            font-size: 0.95rem;
-            color: var(--text-color);
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        .form-control:focus {
-            border-color: var(--accent-color);
-            background-color: #FFFFFF;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s, transform 0.1s;
-            margin-top: 10px;
-        }
-
-        .btn:active {
-            transform: scale(0.98);
-        }
-
-        .btn-primary {
-            background-color: var(--text-color);
-            color: #FFFFFF;
-        }
-
-        .btn-primary:hover {
-            background-color: #444444;
-        }
-
-        .btn-social {
-            background-color: var(--gray-light);
-            color: var(--text-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            border: 1px solid #E0DCD0;
-            margin-top: 10px;
-        }
-
-        .btn-social:hover {
-            background-color: #EAE6DD;
-        }
-
-        .divider {
-            margin: 20px 0;
-            display: flex;
-            align-items: center;
-            text-align: center;
-            color: var(--gray-text);
-            font-size: 0.8rem;
-        }
-
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid #E0DCD0;
-        }
-
-        .divider::before { margin-right: 10px; }
-        .divider::after { margin-left: 10px; }
-
-        .switch-mode {
-            margin-top: 20px;
-            font-size: 0.85rem;
-            color: var(--gray-text);
-        }
-
-        .switch-mode a {
-            color: var(--accent-color);
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .switch-mode a:hover {
-            text-decoration: underline;
-        }
-
-        /* หน้าเข้าสู่ระบบ 1-Click สำหรับครั้งที่ 2 */
-        #one-click-view {
-            display: none;
-        }
-
-        .avatar-circle {
-            width: 80px;
-            height: 80px;
-            background-color: var(--gray-light);
-            border-radius: 50%;
-            margin: 0 auto 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            color: var(--accent-color);
-            border: 2px solid var(--accent-color);
-        }
-
-        .user-greeting {
-            font-size: 1.1rem;
-            margin-bottom: 25px;
-            color: var(--text-center);
-        }
-
-        .logout-link {
-            margin-top: 15px;
-            font-size: 0.8rem;
-            color: var(--gray-text);
-            cursor: pointer;
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-
-    <!-- หน้าแรก: โลโก้ + หยดน้ำกระเพื่อม -->
-    <div id="splash-screen" onclick="proceedToAuth()">
-        <div class="ripple-container">
-            <div class="ripple"></div>
-            <div class="ripple"></div>
-            <div class="ripple"></div>
-        </div>
-        <div class="logo-container">
-            <h1 class="logo-text">LAMAY</h1>
-            <div class="logo-sub">Welcome</div>
-        </div>
-        <div class="tap-hint">แตะเพื่อเริ่มต้น</div>
-    </div>
-
-    <!-- หน้าสมัครสมาชิกครั้งแรก (Sign Up) -->
-    <div id="signup-view" class="main-container">
-        <h2 class="card-logo">LAMAY</h2>
-        <p style="margin-bottom: 20px; font-size: 0.9rem; color: var(--gray-text);">สร้างบัญชีใหม่เพื่อเริ่มต้นใช้งาน</p>
-        
-        <form onsubmit="handleSignup(event)">
-            <div class="form-group">
-                <label>ชื่อ-นามสกุล</label>
-                <input type="text" class="form-control" required placeholder="กรอกชื่อของคุณ">
-            </div>
-            <div class="form-group">
-                <label>อีเมล หรือ เบอร์โทรศัพท์</label>
-                <input type="text" class="form-control" required placeholder="email@example.com">
-            </div>
-            <div class="form-group">
-                <label>รหัสผ่าน</label>
-                <input type="password" class="form-control" required placeholder="••••••••">
-            </div>
-            <button type="submit" class="btn btn-primary">สมัครสมาชิก</button>
-        </form>
-
-        <div class="switch-mode">
-            มีบัญชีอยู่แล้ว? <a href="#" onclick="switchView('login')">เข้าสู่ระบบ</a>
-        </div>
-    </div>
-
-    <!-- หน้าล็อกอินปกติ (Login) -->
-    <div id="login-view" class="main-container">
-        <h2 class="card-logo">LAMAY</h2>
-        
-        <form onsubmit="handleLogin(event)">
-            <div class="form-group">
-                <label>อีเมล หรือ เบอร์โทรศัพท์</label>
-                <input type="text" id="login-email" class="form-control" required placeholder="email@example.com">
-            </div>
-            <div class="form-group">
-                <label>รหัสผ่าน</label>
-                <input type="password" class="form-control" required placeholder="••••••••">
-            </div>
-            <button type="submit" class="btn btn-primary">เข้าสู่ระบบ</button>
-        </form>
-
-        <div class="divider">หรือเข้าสู่ระบบด้วย</div>
-
-        <button class="btn btn-social" onclick="simulateOneClick()">
-            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.8 7.4l3.7 2.9C6.4 7.3 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.5 14.7c-.2-.7-.4-1.5-.4-2.7s.2-2 .4-2.7L1.8 6.4C.7 8.6 0 10.2 0 12s.7 3.4 1.8 5.6l3.7-2.9z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.6-2.3-6.5-5.3L1.8 15C3.7 18.8 7.5 23 12 23z"/></svg>
-            Google / Social Login
-        </button>
-
-        <div class="switch-mode">
-            ยังไม่มีบัญชี? <a href="#" onclick="switchView('signup')">สมัครสมาชิกครั้งแรก</a>
-        </div>
-    </div>
-
-    <!-- หน้าเข้าสู่ระบบ 1-Click (สำหรับครั้งที่ 2 เป็นต้นไป) -->
-    <div id="one-click-view" class="main-container">
-        <h2 class="card-logo">LAMAY</h2>
-        <div class="avatar-circle">L</div>
-        <div class="user-greeting">ยินดีต้อนรับกลับมา<br><strong id="user-display-name">คุณผู้ใช้งาน</strong></div>
-        
-        <button class="btn btn-primary" onclick="executeOneClickLogin()">เข้าสู่ระบบใน 1 Click</button>
-        
-        <div class="logout-link" onclick="resetToFirstTime()">ไม่ใช่บัญชีของคุณ? (สลับบัญชี)</div>
-    </div>
-
-    <script>
-        // ตรวจสอบสถานะการเคยล็อกอิน (จำลองการเก็บข้อมูลในเครื่อง)
-        window.addEventListener('DOMContentLoaded', () => {
-            const isRegistered = localStorage.getItem('lamay_registered');
-            // ถ้าระบบจำได้ว่าเคยสมัคร/ล็อกอินแล้ว จะเตรียมโหมด 1-Click ไว้
-        });
-
-        function proceedToAuth() {
-            const splash = document.getElementById('splash-screen');
-            splash.style.opacity = '0';
-            setTimeout(() => {
-                splash.style.display = 'none';
-                
-                // ตรวจสอบว่าเคยสมัครหรือยัง
-                const isRegistered = localStorage.getItem('lamay_registered');
-                const savedUser = localStorage.getItem('lamay_user') || 'สมาชิก LAMAY';
-
-                if (isRegistered === 'true') {
-                    // หากเป็นครั้งที่ 2 เป็นต้นไป แสดงหน้า 1-Click พร้อมโลโก้
-                    document.getElementById('user-display-name').innerText = savedUser;
-                    showContainer('one-click-view');
-                } else {
-                    // ครั้งแรก ไปหน้าสมัครสมาชิก
-                    showContainer('signup-view');
-                }
-            }, 800);
-        }
-
-        function showContainer(containerId) {
-            document.querySelectorAll('.main-container').forEach(el => {
-                el.style.display = 'none';
-                el.classList.remove('active');
-            });
-            const target = document.getElementById(containerId);
-            target.style.display = 'block';
-            setTimeout(() => target.classList.add('active'), 50);
-        }
-
-        function switchView(type) {
-            if (type === 'login') {
-                showContainer('login-view');
-            } else {
-                showContainer('signup-view');
-            }
-        }
-
-        function handleSignup(event) {
-            event.preventDefault();
-            // จำลองการสมัครสมาชิกสำเร็จ บันทึกสถานะลง localStorage
-            localStorage.setItem('lamay_registered', 'true');
-            localStorage.setItem('lamay_user', 'สมาชิกใหม่ LAMAY');
-            alert('สมัครสมาชิกสำเร็จ!');
-            showContainer('one-click-view');
-            document.getElementById('user-display-name').innerText = 'สมาชิกใหม่ LAMAY';
-        }
-
-        function handleLogin(event) {
-            event.preventDefault();
-            const emailInput = document.getElementById('login-email').value;
-            // จำลองการล็อกอินสำเร็จ บันทึกสถานะ
-            localStorage.setItem('lamay_registered', 'true');
-            localStorage.setItem('lamay_user', emailInput);
-            alert('เข้าสู่ระบบสำเร็จ!');
-            showContainer('one-click-view');
-            document.getElementById('user-display-name').innerText = emailInput;
-        }
-
-        function executeOneClickLogin() {
-            alert('เข้าสู่ระบบสำเร็จใน 1 คลิก ยินดีต้อนรับสู่ LAMAY ครับ!');
-            // สามารถเปลี่ยนเส้นทางไปหน้าแดชบอร์ดหลักได้ที่นี่
-        }
-
-        function resetToFirstTime() {
-            localStorage.clear();
-            alertรีเซ็ตข้อมูลจำลองเรียบร้อย กลับสู่หน้าสมัครสมาชิกครั้งแรก;
-            showContainer('signup-view');
-        }
-    </script>
-</body>
-</html>
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบัญชีฟาร์มและจัดการสินค้า - ละม้ายฟาร์ม</title>
+    <title>LAMAY - ละม้ายฟาร์ม & ระบบจัดการบัญชี</title>
     
     <!-- โหลดไลบรารี SortableJS สำหรับลากสลับตำแหน่งสินค้า -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -468,7 +15,7 @@
             --border-color: #334155;
             --text-color: #f8fafc;
             --text-muted: #94a3b8;
-            --accent-color: #2563eb;
+            --accent-color: #3b82f6;
             --btn-text: #ffffff;
             --item-bg: #0f172a;
             --item-hover: #334155;
@@ -513,18 +60,26 @@
             --item-hover: #334155;
         }
 
-        body {
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            margin: 0;
+            min-height: 100vh;
             padding: 16px;
             transition: background-color 0.5s ease, color 0.5s ease;
         }
+
         .container {
             max-width: 800px;
             margin: 0 auto;
         }
+
         .card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -535,7 +90,7 @@
             transition: background-color 0.5s ease, border-color 0.5s ease;
         }
 
-        /* ส่วนแสดงรูปฟาร์ม Banner (แลนด์สเคปมุมสูงเกษตรพอเพียง) */
+        /* ส่วนแสดงรูปฟาร์ม Banner */
         .farm-banner {
             width: 100%;
             height: 180px;
@@ -558,45 +113,33 @@
             margin-bottom: 12px;
             font-size: 14px;
         }
+
         button {
             cursor: pointer;
             font-weight: bold;
             transition: opacity 0.2s;
         }
+
         button:hover {
             opacity: 0.9;
         }
+
         .btn-primary {
             background: var(--accent-color);
             border-color: var(--accent-color);
             color: var(--btn-text);
         }
+
         .btn-success {
             background: #059669;
             border-color: #047857;
             color: #ffffff;
         }
+
         .btn-danger {
             background: #dc2626;
             border-color: #b91c1c;
             color: #ffffff;
-        }
-
-        /* ปรับแต่งส่วนกลุ่มสินค้าและปุ่มภายในให้เข้ากับโทนธีม */
-        .group-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 12px;
-        }
-        .item-btn {
-            background: var(--item-bg) !important;
-            border: 1px solid var(--border-color) !important;
-            color: var(--text-color) !important;
-        }
-        .item-btn:hover {
-            background: var(--item-hover) !important;
         }
 
         table {
@@ -604,6 +147,7 @@
             border-collapse: collapse;
             margin-top: 10px;
         }
+
         th {
             background: var(--border-color);
             color: var(--text-color);
@@ -612,7 +156,115 @@
             text-align: left;
         }
 
-        /* Drawer สำหรับแสดงข้อมูลความรู้ AI */
+        /* หน้าจอเริ่มต้น (Splash Screen) พร้อมเอฟเฟกต์หยดน้ำ */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            cursor: pointer;
+            transition: opacity 0.8s ease;
+        }
+
+        .ripple-container {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .ripple {
+            position: absolute;
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            border-radius: 50%;
+            animation: ripple-effect 2.5s infinite cubic-bezier(0.1, 0.8, 0.3, 1);
+        }
+
+        .ripple:nth-child(2) { animation-delay: 0.8s; }
+        .ripple:nth-child(3) { animation-delay: 1.6s; }
+
+        @keyframes ripple-effect {
+            0% { width: 50px; height: 50px; opacity: 1; }
+            100% { width: 350px; height: 350px; opacity: 0; }
+        }
+
+        .logo-container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .logo-text {
+            font-size: 3.5rem;
+            font-weight: 300;
+            letter-spacing: 8px;
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+
+        .logo-sub {
+            font-size: 0.9rem;
+            letter-spacing: 4px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .tap-hint {
+            position: absolute;
+            bottom: 60px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        /* 1-Click Avatar */
+        .avatar-circle {
+            width: 80px;
+            height: 80px;
+            background-color: var(--border-color);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: var(--accent-color);
+            border: 2px solid var(--accent-color);
+        }
+
+        .time-badge {
+            display: inline-block;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: var(--border-color);
+            color: var(--text-color);
+            margin-left: 8px;
+        }
+
+        /* Drawer สำหรับข้อมูล AI ด้านล่าง */
         #knowledge-drawer {
             display: none;
             position: fixed;
@@ -627,235 +279,341 @@
             max-height: 50vh;
             overflow-y: auto;
         }
-
-        .time-badge {
-            display: inline-block;
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 12px;
-            background: var(--border-color);
-            color: var(--text-color);
-            margin-left: 8px;
-        }
     </style>
 </head>
 <body id="mainBody">
 
-<div class="container">
-
-    <!-- 1. ส่วนเข้าสู่ระบบ / สมัครสมาชิก (Auth Wrapper) -->
-    <div id="auth-wrapper" class="card">
-        <!-- รูปฟาร์มแลนด์สเคปมุมสูงเกษตรพอเพียง (มีสระน้ำ บ้านตรงกลาง สวน พืชพรรณ) -->
-        <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80" alt="ละม้ายฟาร์มเกษตรพอเพียงมุมสูง" class="farm-banner">
-        <h2 style="text-align: center; margin-top: 0;">🌾 ละม้ายฟาร์ม - ระบบจัดการ</h2>
-        
-        <!-- หน้าเข้าสู่ระบบ -->
-        <div id="login-page">
-            <h3>เข้าสู่ระบบ</h3>
-            <label>ชื่อผู้ใช้งาน</label>
-            <input type="text" id="loginNameInput" placeholder="กรอกชื่อผู้ใช้งาน หรือ admin">
-            <label>รหัสผ่าน</label>
-            <input type="password" id="loginPassInput" placeholder="กรอกรหัสผ่าน หรือ 1234">
-            <button class="btn-primary" onclick="login()">เข้าสู่ระบบ</button>
-            <p style="text-align: center; font-size: 12px; color: var(--text-muted); cursor: pointer;" onclick="switchAuthMode('register')">ยังไม่มีบัญชี? สมัครสมาชิกที่นี่</p>
+    <!-- หน้าแรก: โลโก้ + หยดน้ำกระเพื่อม (Splash Screen) -->
+    <div id="splash-screen" onclick="proceedToAuth()">
+        <div class="ripple-container">
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+            <div class="ripple"></div>
         </div>
-
-        <!-- หน้าสมัครสมาชิก -->
-        <div id="register-page" style="display: none;">
-            <h3>สมัครสมาชิก</h3>
-            <label>ชื่อผู้ใช้งาน</label>
-            <input type="text" id="regNameInput" placeholder="ตั้งชื่อผู้ใช้งาน">
-            <label>รหัสผ่าน</label>
-            <input type="password" id="regPassInput" placeholder="ตั้งรหัสผ่าน">
-            <label>ยืนยันรหัสผ่าน</label>
-            <input type="password" id="regConfirmPassInput" placeholder="กรอกรหัสผ่านอีกครั้ง">
-            <button class="btn-success" onclick="register()">ยืนยันการสมัคร</button>
-            <p style="text-align: center; font-size: 12px; color: var(--text-muted); cursor: pointer;" onclick="switchAuthMode('login')">มีบัญชีอยู่แล้ว? เข้าสู่ระบบ</p>
+        <div class="logo-container">
+            <h1 class="logo-text">LAMAY</h1>
+            <div class="logo-sub">ละม้ายฟาร์ม</div>
         </div>
+        <div class="tap-hint">แตะเพื่อเริ่มต้น</div>
     </div>
 
-    <!-- 2. หน้าหลักของแอปพลิเคชัน (ซ่อนไว้จนกว่าจะ Login ผ่าน) -->
-    <div id="app-page" style="display: none;">
-        
-        <!-- แถบต้อนรับและปุ่มออกจากระบบ พร้อมแสดงสถานะเวลา -->
-        <div class="card" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
-            <span>👤 สวัสดี, <strong id="displayName"></strong> <span id="timeStatusBadge" class="time-badge">กำลังโหลดเวลา...</span></span>
-            <button class="btn-danger" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px;" onclick="logout()">ออกจากระบบ</button>
-        </div>
+    <div class="container">
 
-        <!-- การ์ดรูปภาพฟาร์มประจำวันในหน้าหลัก (แลนด์สเคปมุมสูง) -->
-        <div class="card" style="padding: 10px; text-align: center;">
-            <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80" alt="บรรยากาศละม้ายฟาร์มมุมสูง" class="farm-banner" style="margin-bottom: 0;">
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">🌱 ละม้ายฟาร์ม - โคก หนอง นา, สระน้ำ, โรงเรือน และแปลงเกษตรครบวงจร</div>
-        </div>
-
-        <!-- ช่องค้นหาสินค้าด่วน -->
-        <div class="card">
-            <label>🔍 ค้นหารายการสินค้า/วัตถุดิบ</label>
-            <input type="text" id="searchFilter" placeholder="พิมพ์ชื่อเพื่อค้นหา..." oninput="filterButtons(this.value)">
-        </div>
-
-        <!-- พื้นที่แสดงกลุ่มสินค้าและปุ่มสินค้า -->
-        <div class="card">
-            <h3>📦 รายการสินค้าในระบบ</h3>
-            <div id="groups-container"></div>
-        </div>
-
-        <!-- ฟอร์มเพิ่มสินค้าใหม่เข้าหมวดหมู่ -->
-        <div class="card">
-            <h3 style="margin-top: 0; color: var(--accent-color);">➕ เพิ่มรายการสินค้าใหม่</h3>
-            <label>ชื่อสินค้าใหม่</label>
-            <input type="text" id="newItemName" placeholder="เช่น 🍋 มะนาวแป้น">
+        <!-- 1. ส่วนเข้าสู่ระบบ / สมัครสมาชิก (Auth Wrapper) -->
+        <div id="auth-wrapper" class="card" style="display: none;">
+            <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80" alt="ละม้ายฟาร์มเกษตรพอเพียงมุมสูง" class="farm-banner">
+            <h2 style="text-align: center; margin-top: 0;">🌾 LAMAY - ระบบจัดการฟาร์ม</h2>
             
-            <label>ราคากลาง (บาท)</label>
-            <input type="number" id="newItemMarketPrice" placeholder="0">
-            
-            <label>เลือกกลุ่มสินค้า</label>
-            <select id="groupSelect" onchange="toggleNewGroupInput(this.value)"></select>
-            <input type="text" id="newGroupName" placeholder="ตั้งชื่อกลุ่มใหม่..." style="display: none;">
-
-            <label>หน่วยสินค้า</label>
-            <select id="newItemUnit" onchange="toggleCustomUnitInput(this.value)">
-                <option value="ตัว">ตัว</option>
-                <option value="กก.">กก.</option>
-                <option value="ลูก">ลูก</option>
-                <option value="กำ">กำ</option>
-                <option value="แผง">แผง</option>
-                <option value="กระสอบ">กระสอบ</option>
-                <option value="ถุง">ถุง</option>
-                <option value="ม้วน">ม้วน</option>
-                <option value="ซอง">ซอง</option>
-                <option value="custom">-- กำหนดหน่วยเอง --</option>
-            </select>
-            <input type="text" id="customUnitName" placeholder="พิมพ์หน่วยของคุณ..." style="display: none;">
-
-            <!-- ปุ่มบันทึกสินค้าใหม่ ใช้สีธีมเดียวกัน (--accent-color) -->
-            <button class="btn-primary" onclick="addNewButton()">เพิ่มสินค้าใหม่</button>
-        </div>
-
-        <!-- 3. ส่วนบัญชีฟาร์ม (Account Panel) สำหรับกรอกรายรับ-รายจ่าย -->
-        <div class="card account-panel">
-            <h3>💰 บัญชีฟาร์ม (รายรับ / รายจ่าย)</h3>
-            
-            <label>วันที่</label>
-            <input type="date" id="expenseDate">
-
-            <label>รายการ</label>
-            <input type="text" id="expenseDetail" placeholder="ชื่อรายการ..." oninput="onTypeDebounce(this)">
-
-            <!-- กล่องเทียบราคากลางอัตโนมัติ -->
-            <div id="priceCompareBox" style="display: none; background: var(--bg-color); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px; font-size: 13px; justify-content: space-between; align-items: center;">
-                <span>💡 ราคากลางอ้างอิง: <strong id="marketPriceDisplay" style="color: var(--accent-color);">0</strong> <span id="marketPriceUnit" style="color: var(--text-muted);">฿</span></span>
+            <!-- หน้าเข้าสู่ระบบ (Login) -->
+            <div id="login-page">
+                <h3>เข้าสู่ระบบ</h3>
+                <label>ชื่อผู้ใช้งาน หรือ อีเมล</label>
+                <input type="text" id="loginNameInput" placeholder="กรอกชื่อผู้ใช้งาน">
+                <label>รหัสผ่าน</label>
+                <input type="password" id="loginPassInput" placeholder="กรอกรหัสผ่าน">
+                <button class="btn-primary" onclick="login()">เข้าสู่ระบบ</button>
+                <p style="text-align: center; font-size: 12px; color: var(--text-muted); cursor: pointer; margin-top: 10px;" onclick="switchAuthMode('register')">ยังไม่มีบัญชี? สมัครสมาชิกที่นี่</p>
             </div>
 
-            <div style="display: flex; gap: 10px;">
-                <div style="flex: 1;">
-                    <label>ราคาต่อหน่วย (฿)</label>
-                    <input type="number" id="unitPrice" placeholder="0" oninput="calculateTotal()">
+            <!-- หน้าสมัครสมาชิก (Register) -->
+            <div id="register-page" style="display: none;">
+                <h3>สมัครสมาชิก</h3>
+                <label>ชื่อผู้ใช้งาน</label>
+                <input type="text" id="regNameInput" placeholder="ตั้งชื่อผู้ใช้งาน">
+                <label>รหัสผ่าน</label>
+                <input type="password" id="regPassInput" placeholder="ตั้งรหัสผ่าน">
+                <label>ยืนยันรหัสผ่าน</label>
+                <input type="password" id="regConfirmPassInput" placeholder="กรอกรหัสผ่านอีกครั้ง">
+                <button class="btn-success" onclick="register()">ยืนยันการสมัคร</button>
+                <p style="text-align: center; font-size: 12px; color: var(--text-muted); cursor: pointer; margin-top: 10px;" onclick="switchAuthMode('login')">มีบัญชีอยู่แล้ว? เข้าสู่ระบบ</p>
+            </div>
+        </div>
+
+        <!-- หน้าเข้าสู่ระบบแบบ 1-Click สำหรับครั้งที่ 2 เป็นต้นไป -->
+        <div id="one-click-view" class="card" style="display: none; text-align: center; max-width: 420px; margin: 40px auto;">
+            <h2 class="logo-text" style="font-size: 2rem; margin-bottom: 15px;">LAMAY</h2>
+            <div class="avatar-circle">L</div>
+            <div style="font-size: 1.1rem; margin-bottom: 25px;">ยินดีต้อนรับกลับมา<br><strong id="user-display-name">คุณผู้ใช้งาน</strong></div>
+            
+            <button class="btn-primary" onclick="executeOneClickLogin()">เข้าสู่ระบบใน 1 Click</button>
+            <div style="margin-top: 15px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; text-decoration: underline;" onclick="resetToFirstTime()">ไม่ใช่บัญชีของคุณ? (สลับบัญชี)</div>
+        </div>
+
+        <!-- 2. หน้าหลักของแอปพลิเคชัน (แสดงหลัง Login สำเร็จ) -->
+        <div id="app-page" style="display: none;">
+            
+            <!-- แถบต้อนรับและปุ่มออกจากระบบ พร้อมแสดงสถานะเวลา -->
+            <div class="card" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
+                <span>👤 สวัสดี, <strong id="displayName"></strong> <span id="timeStatusBadge" class="time-badge">กำลังโหลดเวลา...</span></span>
+                <button class="btn-danger" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px;" onclick="logout()">ออกจากระบบ</button>
+            </div>
+
+            <!-- การ์ดรูปภาพฟาร์มประจำวันในหน้าหลัก -->
+            <div class="card" style="padding: 10px; text-align: center;">
+                <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80" alt="บรรยากาศละม้ายฟาร์มมุมสูง" class="farm-banner" style="margin-bottom: 0;">
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">🌱 ละม้ายฟาร์ม - โคก หนอง นา, สระน้ำ, โรงเรือน และแปลงเกษตรครบวงจร</div>
+            </div>
+
+            <!-- ช่องค้นหาสินค้าด่วน -->
+            <div class="card">
+                <label>🔍 ค้นหารายการสินค้า/วัตถุดิบ</label>
+                <input type="text" id="searchFilter" placeholder="พิมพ์ชื่อเพื่อค้นหา..." oninput="filterButtons(this.value)">
+            </div>
+
+            <!-- พื้นที่แสดงกลุ่มสินค้าและปุ่มสินค้า -->
+            <div class="card">
+                <h3>📦 รายการสินค้าในระบบ</h3>
+                <div id="groups-container"></div>
+            </div>
+
+            <!-- ฟอร์มเพิ่มสินค้าใหม่เข้าหมวดหมู่ -->
+            <div class="card">
+                <h3 style="margin-top: 0; color: var(--accent-color);">➕ เพิ่มรายการสินค้าใหม่</h3>
+                <label>ชื่อสินค้าใหม่</label>
+                <input type="text" id="newItemName" placeholder="เช่น 🍋 มะนาวแป้น">
+                
+                <label>ราคากลาง (บาท)</label>
+                <input type="number" id="newItemMarketPrice" placeholder="0">
+                
+                <label>เลือกกลุ่มสินค้า</label>
+                <select id="groupSelect" onchange="toggleNewGroupInput(this.value)"></select>
+                <input type="text" id="newGroupName" placeholder="ตั้งชื่อกลุ่มใหม่..." style="display: none;">
+
+                <label>หน่วยสินค้า</label>
+                <select id="newItemUnit" onchange="toggleCustomUnitInput(this.value)">
+                    <option value="ตัว">ตัว</option>
+                    <option value="กก.">กก.</option>
+                    <option value="ลูก">ลูก</option>
+                    <option value="กำ">กำ</option>
+                    <option value="แผง">แผง</option>
+                    <option value="กระสอบ">กระสอบ</option>
+                    <option value="ถุง">ถุง</option>
+                    <option value="ม้วน">ม้วน</option>
+                    <option value="ซอง">ซอง</option>
+                    <option value="custom">-- กำหนดหน่วยเอง --</option>
+                </select>
+                <input type="text" id="customUnitName" placeholder="พิมพ์หน่วยของคุณ..." style="display: none;">
+
+                <button class="btn-primary" onclick="addNewButton()">เพิ่มสินค้าใหม่</button>
+            </div>
+
+            <!-- 3. ส่วนบัญชีฟาร์ม (Account Panel) สำหรับกรอกรายรับ-รายจ่าย -->
+            <div class="card account-panel">
+                <h3>💰 บัญชีฟาร์ม (รายรับ / รายจ่าย)</h3>
+                
+                <label>วันที่</label>
+                <input type="date" id="expenseDate">
+
+                <label>รายการ</label>
+                <input type="text" id="expenseDetail" placeholder="ชื่อรายการ..." oninput="onTypeDebounce(this)">
+
+                <!-- กล่องเทียบราคากลางอัตโนมัติ -->
+                <div id="priceCompareBox" style="display: none; background: var(--bg-color); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px; font-size: 13px; justify-content: space-between; align-items: center;">
+                    <span>💡 ราคากลางอ้างอิง: <strong id="marketPriceDisplay" style="color: var(--accent-color);">0</strong> <span id="marketPriceUnit" style="color: var(--text-muted);">฿</span></span>
                 </div>
-                <div style="flex: 1;">
-                    <label>จำนวน</label>
-                    <input type="number" id="unitQuantity" value="1" placeholder="1" oninput="calculateTotal()">
+
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>ราคาต่อหน่วย (฿)</label>
+                        <input type="number" id="unitPrice" placeholder="0" oninput="calculateTotal()">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>จำนวน</label>
+                        <input type="number" id="unitQuantity" value="1" placeholder="1" oninput="calculateTotal()">
+                    </div>
+                </div>
+
+                <label>หน่วยของรายการ</label>
+                <select id="dynamicUnitSelect" onchange="onManualUnitChange(this.value)">
+                    <option value="หน่วย">หน่วย</option>
+                    <option value="ตัว">ตัว</option>
+                    <option value="กก.">กก.</option>
+                    <option value="ลูก">ลูก</option>
+                    <option value="กำ">กำ</option>
+                    <option value="แผง">แผง</option>
+                    <option value="กระสอบ">กระสอบ</option>
+                </select>
+
+                <div style="text-align: right; font-size: 15px; margin-bottom: 12px; font-weight: bold;">
+                    รวมเป็นเงินทั้งสิ้น: <span id="displayTotal" style="color: var(--accent-color);">0</span> บาท
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-success" style="flex: 1;" onclick="addEntry('รายรับ')">📥 บันทึกรายรับ</button>
+                    <button class="btn-danger" style="flex: 1;" onclick="addEntry('รายจ่าย')">📤 บันทึกรายจ่าย</button>
                 </div>
             </div>
 
-            <!-- เลือกหน่วยกำกับเวลาบันทึกบัญชี -->
-            <label>หน่วยของรายการ</label>
-            <select id="dynamicUnitSelect" onchange="onManualUnitChange(this.value)">
-                <option value="หน่วย">หน่วย</option>
-                <option value="ตัว">ตัว</option>
-                <option value="กก.">กก.</option>
-                <option value="ลูก">ลูก</option>
-                <option value="กำ">กำ</option>
-                <option value="แผง">แผง</option>
-                <option value="กระสอบ">กระสอบ</option>
-            </select>
+            <!-- 4. ส่วนสรุปยอดและประวัติบัญชี -->
+            <div class="card">
+                <h3>📊 สรุปยอดการเงิน</h3>
+                <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;">
+                    <span>รายรับรวม: <strong id="totalIncome" style="color: #10b981;">0</strong> ฿</span>
+                    <span>รายจ่ายรวม: <strong id="totalExpense" style="color: #ef4444;">0</strong> ฿</span>
+                </div>
+                <div style="font-size: 16px; font-weight: bold; margin-bottom: 12px;">
+                    คงเหลือสุทธิ: <span id="netBalance">0</span> ฿
+                </div>
 
-            <div style="text-align: right; font-size: 15px; margin-bottom: 12px; font-weight: bold;">
-                รวมเป็นเงินทั้งสิ้น: <span id="displayTotal" style="color: var(--accent-color);">0</span> บาท
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+                    <h4 id="historyCountText" style="margin: 0;">รายการใหม่</h4>
+                    <button id="toggleHistoryBtn" style="width: auto; margin: 0; padding: 6px 10px; font-size: 11px;" onclick="toggleHistoryLimit()">ดูประวัติทั้งหมด 📝</button>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>วันที่</th>
+                            <th>รายการ</th>
+                            <th>จำนวนเงิน</th>
+                            <th style="text-align: center;">ลบ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody"></tbody>
+                </table>
+
+                <button class="btn-danger" style="margin-top: 16px; font-size: 12px;" onclick="clearAllData()">⚠️ ล้างประวัติบัญชีทั้งหมด</button>
             </div>
 
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-success" style="flex: 1;" onclick="addEntry('รายรับ')">📥 บันทึกรายรับ</button>
-                <button class="btn-danger" style="flex: 1;" onclick="addEntry('รายจ่าย')">📤 บันทึกรายจ่าย</button>
-            </div>
         </div>
+    </div>
 
-        <!-- 4. ส่วนสรุปยอดและประวัติบัญชี -->
-        <div class="card">
-            <h3>📊 สรุปยอดการเงิน</h3>
-            <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;">
-                <span>รายรับรวม: <strong id="totalIncome" style="color: #10b981;">0</strong> ฿</span>
-                <span>รายจ่ายรวม: <strong id="totalExpense" style="color: #ef4444;">0</strong> ฿</span>
-            </div>
-            <div style="font-size: 16px; font-weight: bold; margin-bottom: 12px;">
-                คงเหลือสุทธิ: <span id="netBalance">0</span> ฿
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
-                <h4 id="historyCountText" style="margin: 0;">รายการใหม่</h4>
-                <button id="toggleHistoryBtn" style="width: auto; margin: 0; padding: 6px 10px; font-size: 11px;" onclick="toggleHistoryLimit()">ดูประวัติทั้งหมด 📝</button>
-            </div>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>วันที่</th>
-                        <th>รายการ</th>
-                        <th>จำนวนเงิน</th>
-                        <th style="text-align: center;">ลบ</th>
-                    </tr>
-                </thead>
-                <tbody id="historyBody"></tbody>
-            </table>
-
-            <button class="btn-danger" style="margin-top: 16px; font-size: 12px;" onclick="clearAllData()">⚠️ ล้างประวัติบัญชีทั้งหมด</button>
+    <!-- 5. Drawer สำหรับแสดงข้อมูลความรู้ AI ด้านล่างจอ -->
+    <div id="knowledge-drawer">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h4 id="knowledge-title" style="margin: 0; color: var(--accent-color); font-size: 14px;">💡 ข้อมูล</h4>
+            <button onclick="closeDrawer()" style="background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; width: auto; margin: 0; padding: 0;">✕</button>
         </div>
-
+        <div id="knowledge-content"></div>
     </div>
-</div>
 
-<!-- 5. Drawer สำหรับแสดงข้อมูลความรู้ AI ด้านล่างจอ -->
-<div id="knowledge-drawer">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <h4 id="knowledge-title" style="margin: 0; color: var(--accent-color); font-size: 14px;">💡 ข้อมูล</h4>
-        <button onclick="closeDrawer()" style="background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; width: auto; margin: 0; padding: 0;">✕</button>
-    </div>
-    <div id="knowledge-content"></div>
-</div>
+    <script>
+        // ระบบเปลี่ยนธีมตามช่วงเวลาอัตโนมัติ
+        function applyTimeBasedTheme() {
+            const hour = new Date().getHours();
+            const body = document.getElementById('mainBody');
+            const badge = document.getElementById('timeStatusBadge');
 
-<script>
-    // ฟังก์ชันตรวจสอบและเปลี่ยนธีมตามช่วงเวลาอัตโนมัติ
-    function applyTimeBasedTheme() {
-        const hour = new Date().getHours();
-        const body = document.getElementById('mainBody');
-        const badge = document.getElementById('timeStatusBadge');
+            body.classList.remove('theme-morning', 'theme-afternoon', 'theme-night');
 
-        body.classList.remove('theme-morning', 'theme-afternoon', 'theme-night');
-
-        if (hour >= 6 && hour < 12) {
-            body.classList.add('theme-morning');
-            if (badge) badge.textContent = '🌅 ช่วงเช้า';
-        } else if (hour >= 12 && hour < 18) {
-            body.classList.add('theme-afternoon');
-            if (badge) badge.textContent = '☀️ ช่วงบ่าย';
-        } else {
-            body.classList.add('theme-night');
-            if (badge) badge.textContent = '🌙 ช่วงค่ำ/กลางคืน';
+            if (hour >= 6 && hour < 12) {
+                body.classList.add('theme-morning');
+                if (badge) badge.textContent = '🌅 ช่วงเช้า';
+            } else if (hour >= 12 && hour < 18) {
+                body.classList.add('theme-afternoon');
+                if (badge) badge.textContent = '☀️ ช่วงบ่าย';
+            } else {
+                body.classList.add('theme-night');
+                if (badge) badge.textContent = '🌙 ช่วงค่ำ/กลางคืน';
+            }
         }
-    }
 
-    // เรียกทำงานทันทีเมื่อโหลดหน้าเว็บ
-    window.addEventListener('DOMContentLoaded', () => {
-        applyTimeBasedTheme();
-    });
-</script>
+        // จัดการหน้า Splash Screen และระบบ 1-Click Login
+        window.addEventListener('DOMContentLoaded', () => {
+            applyTimeBasedTheme();
+        });
 
-<!-- ดึงฐานข้อมูล 142 รายการมาโหลดก่อนเสมอ -->
-<script src="database.js"></script>
+        function proceedToAuth() {
+            const splash = document.getElementById('splash-screen');
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.display = 'none';
+                
+                const isRegistered = localStorage.getItem('lamay_registered');
+                const savedUser = localStorage.getItem('lamay_user') || 'สมาชิก LAMAY';
 
-<!-- โหลดไฟล์สคริปต์การทำงานหลักตามมา -->
-<script src="script.js"></script>
+                if (isRegistered === 'true') {
+                    document.getElementById('user-display-name').innerText = savedUser;
+                    document.getElementById('one-click-view').style.display = 'block';
+                } else {
+                    document.getElementById('auth-wrapper').style.display = 'block';
+                }
+            }, 800);
+        }
 
+        function switchAuthMode(mode) {
+            if (mode === 'register') {
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('register-page').style.display = 'block';
+            } else {
+                document.getElementById('register-page').style.display = 'none';
+                document.getElementById('login-page').style.display = 'block';
+            }
+        }
+
+        function register() {
+            const name = document.getElementById('regNameInput').value;
+            const pass = document.getElementById('regPassInput').value;
+            const confirmPass = document.getElementById('regConfirmPassInput').value;
+
+            if (!name || !pass) {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+            if (pass !== confirmPass) {
+                alert('รหัสผ่านไม่ตรงกัน');
+                return;
+            }
+
+            localStorage.setItem('lamay_registered', 'true');
+            localStorage.setItem('lamay_user', name);
+            alert('สมัครสมาชิกสำเร็จ!');
+            
+            document.getElementById('auth-wrapper').style.display = 'none';
+            startApp(name);
+        }
+
+        function login() {
+            const name = document.getElementById('loginNameInput').value;
+            const pass = document.getElementById('loginPassInput').value;
+
+            if (!name || !pass) {
+                alert('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน');
+                return;
+            }
+
+            localStorage.setItem('lamay_registered', 'true');
+            localStorage.setItem('lamay_user', name);
+            alert('เข้าสู่ระบบสำเร็จ!');
+            
+            document.getElementById('auth-wrapper').style.display = 'none';
+            startApp(name);
+        }
+
+        function executeOneClickLogin() {
+            const savedUser = localStorage.getItem('lamay_user') || 'สมาชิก LAMAY';
+            document.getElementById('one-click-view').style.display = 'none';
+            alert('เข้าสู่ระบบสำเร็จใน 1 คลิก!');
+            startApp(savedUser);
+        }
+
+        function resetToFirstTime() {
+            localStorage.clear();
+            alert('รีเซ็ตข้อมูลเรียบร้อย กลับสู่หน้าสมัครสมาชิก');
+            document.getElementById('one-click-view').style.display = 'none';
+            document.getElementById('auth-wrapper').style.display = 'block';
+        }
+
+        function startApp(username) {
+            document.getElementById('app-page').style.display = 'block';
+            const displayNameEl = document.getElementById('displayName');
+            if (displayNameEl) displayNameEl.innerText = username;
+            
+            // เรียกใช้งานฟังก์ชันเริ่มต้นของระบบบัญชีฟาร์ม (ถ้ามีใน script.js)
+            if (typeof initApp === 'function') {
+                initApp();
+            }
+        }
+
+        function logout() {
+            document.getElementById('app-page').style.display = 'none';
+            document.getElementById('one-click-view').style.display = 'block';
+        }
+    </script>
+
+    <!-- ดึงฐานข้อมูลสินค้า -->
+    <script src="database.js"></script>
+    <!-- โหลดไฟล์สคริปต์การทำงานหลัก -->
+    <script src="script.js"></script>
 </body>
 </html>
