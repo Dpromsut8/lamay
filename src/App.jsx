@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import Login from './components/Login';
-import FarmMap from './components/FarmMap';
-import Inventory from './components/Inventory';
-import Accounting from './components/Accounting';
-import AIDoctor from './components/AIDoctor';
-import './components/Dashboard.css';
+  import React, { useState } from 'react';
+  import Login from './components/Login';
+  import FarmMap from './components/FarmMap';
+  import Inventory from './components/Inventory';
+  import Accounting from './components/Accounting';
+  import AIDoctor from './components/AIDoctor';
+  import './components/Dashboard.css';
 
-export default function App() {
+  export default function App() {
   const [user, setUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState('ชะอม');
   const [aiBoxData, setAiBoxData] = useState({
@@ -32,7 +32,38 @@ export default function App() {
 
       {/* Main Content Area */}
       <div style={{ padding: '12px' }}>
-        
+       {/* กรอบรูปภาพต้องมี position: relative */}
+<div className="farm-banner-container" style={{ position: 'relative' }}>
+    <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80" alt="ละม้ายฟาร์ม" className="farm-banner-img" />
+    
+    {/* กล่อง AI ที่ซ้อนทับบนรูปภาพต้องมี position: absolute */}
+    {aiBoxData.visible && (
+      <div style={{
+        position: 'absolute',
+        top: '10px',
+        left: '10px',
+        right: '10px',
+        background: 'rgba(15, 23, 42, 0.95)',
+        border: '1px solid #34d399',
+        borderRadius: '12px',
+        padding: '12px',
+        zIndex: 10,
+        textAlign: 'left'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+          <span style={{ color: '#60a5fa', fontWeight: 'bold', fontSize: '13px' }}>{aiBoxData.title}</span>
+          <button onClick={() => setAiBoxData({ ...aiBoxData, visible: false })} style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '14px', cursor: 'pointer' }}>✕</button>
+        </div>
+        <div style={{ color: '#cbd5e1', fontSize: '11px', lineHeight: '1.4', marginBottom: '8px' }}>
+          {aiBoxData.content}
+        </div>
+        <a href="https://www.google.com" target="_blank" rel="noreferrer" style={{ display: 'block', textDecoration: 'none', padding: '6px', background: '#1e293b', color: '#60a5fa', border: '1px solid #475569', borderRadius: '8px', fontWeight: 'bold', fontSize: '11px', textAlign: 'center' }}>
+          🔍 ค้นหาบน Google เพิ่มเติม
+        </a>
+      </div>
+    )}
+</div>
+ 
         {/* การ์ดรูปภาพฟาร์ม พร้อมกล่อง AI ลอยอยู่ด้านบนตามความต้องการ */}
         <div className="glass-card" style={{ padding: '10px', textAlign: 'center' }}>
           <div className="farm-banner-container">
