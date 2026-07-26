@@ -350,10 +350,21 @@
             </div>
 
             <!-- การ์ดรูปภาพฟาร์มประจำวันในหน้าหลัก -->
-            <div class="card" style="padding: 10px; text-align: center;">
-                <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80" alt="บรรยากาศละม้ายฟาร์มมุมสูง" class="farm-banner" style="margin-bottom: 0;">
-                <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">🌱 ละม้ายฟาร์ม - โคก หนอง นา, สระน้ำ, โรงเรือน และแปลงเกษตรครบวงจร</div>
-            </div>
+<div class="card" style="padding: 10px; text-align: center; position: relative;">
+    <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80" alt="บรรยากาศละม้ายฟาร์มมุมสูง" class="farm-banner" style="margin-bottom: 0; width: 100%; border-radius: 8px;">
+    
+    <!-- กล่องแสดงข้อมูล AI (ลอยอยู่บนรูป) จะถูกซ่อนไว้เริ่มต้น -->
+    <div id="inline-knowledge-box" style="display: none; position: absolute; top: 15px; left: 15px; right: 15px; background: rgba(30, 41, 59, 0.95); border: 1px solid #475569; border-radius: 12px; padding: 12px; text-align: left; box-shadow: 0 4px 10px rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h4 id="knowledge-title" style="margin: 0; color: #60a5fa; font-size: 14px;">💡 ข้อมูล</h4>
+            <button onclick="closeInlineKnowledge()" style="background: none; border: none; color: #94a3b8; font-size: 16px; cursor: pointer; padding: 0;">✕</button>
+        </div>
+        <div id="knowledge-content"></div>
+    </div>
+
+    <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">🌱 ละม้ายฟาร์ม - โคก หนอง นา, สระน้ำ, โรงเรือน และแปลงเกษตรครบวงจร</div>
+</div>
+
 
             <!-- ช่องค้นหาสินค้าด่วน -->
             <div class="card">

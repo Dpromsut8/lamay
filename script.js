@@ -714,11 +714,31 @@ async function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
 
     const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`การดูแลรักษา วิธีนำไปใช้งาน ${pureSearchName}`)}`;
 
-    openKnowledgeDrawer(`💡 ข้อมูล: ${pureSearchName}`, `
-        <div style="background: #1e293b; border-radius: 10px; padding: 10px; margin-bottom: 10px; border: 1px solid #334155; color: #f8fafc;">
+    async function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
+    if (!rawItemName) return;
+    const pureSearchName = rawItemName.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
+
+    let aiSummaryText = "";
+    let foundAI = false;
+    
+    // ตรวจสอบข้อมูลจาก database (ต้องแน่ใจว่าโหลดตัวแปร smartAISummaries มาแล้ว)
+    if (typeof smartAISummaries !== 'undefined') {
+        for (let key in smartAISummaries) {
+            if (pureSearchName.includes(key)) {
+                aiSummaryText = smartAISummaries[key];
+                foundAI = true;
+                break;
+            }
+        }
+    }
+
+    const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`การดูแลรักษา วิธีนำไปใช้งาน ${pureSearchName}`)}`;
+
+    showInlineKnowledge(`💡 ข้อมูล: ${pureSearchName}`, `
+        <div style="background: #0f172a; border-radius: 10px; padding: 10px; margin-bottom: 10px; border: 1px solid #334155; color: #f8fafc;">
             <div style="color: #60a5fa; font-weight: bold; margin-bottom: 6px; font-size: 13px;">✨ ข้อมูลภาพรวมโดย AI</div>
             <div id="wiki-summary-content" style="color: #cbd5e1; font-size: 11px; line-height: 1.4;">
-                ${foundAI ? aiSummaryText : 'กำลังดึงข้อมูล...'}
+                ${foundAI ? aiSummaryText : 'ไม่พบข้อมูล AI เฉพาะ กรุณาค้นหาเพิ่มเติม'}
             </div>
         </div>
         <a href="${googleSearchUrl}" target="_blank" style="display: block; text-align: center; text-decoration: none; padding: 8px; background: #1e293b; color: #60a5fa; border: 1px solid #475569; border-radius: 8px; font-weight: bold; font-size: 12px;">
@@ -727,15 +747,20 @@ async function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
     `);
 }
 
-function openKnowledgeDrawer(title, htmlContent) {
-    const drawer = document.getElementById('knowledge-drawer');
-    if (!drawer) return;
+function showInlineKnowledge(title, htmlContent) {
+    const box = document.getElementById('inline-knowledge-box');
+    if (!box) return;
     document.getElementById('knowledge-title').textContent = title;
     document.getElementById('knowledge-content').innerHTML = htmlContent;
-    drawer.style.display = 'block';
+    box.style.display = 'block';
+    
+    // เลื่อนหน้าจอไปที่รูปภาพอัตโนมัติเพื่อให้เห็นข้อมูล
+    box.parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-function closeDrawer() {
-    const drawer = document.getElementById('knowledge-drawer');
-    if (drawer) drawer.style.display = 'none';
+function closeInlineKnowledge() {
+    const box = document.getElementById('inline-knowledge-box');
+    if (box) box.style.display = 'none';
+}
+
 }

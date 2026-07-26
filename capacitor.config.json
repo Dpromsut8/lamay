@@ -1,0 +1,6 @@
+{
+  "appId": "com.lamay.farm",
+  "appName": "Lamay",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
