@@ -40,5 +40,5 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-        name: LAMAY.apk
-        path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: LAMAY.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
