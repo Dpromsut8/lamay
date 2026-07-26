@@ -3,33 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบัญชีฟาร์มและจัดการสินค้า</title>
+    <title>ระบบบัญชีฟาร์มและจัดการสินค้า - ละม้ายฟาร์ม</title>
     <!-- โหลดไลบรารี SortableJS สำหรับลากสลับตำแหน่งสินค้า -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-color: #2563eb;
+        }
+
+        /* ธีมตามช่วงเวลา */
+        body.theme-morning {
+            --bg-color: #f0fdf4;
+            --card-bg: #ffffff;
+            --border-color: #bbf7d0;
+            --text-color: #166534;
+            --text-muted: #4ade80;
+            --accent-color: #16a34a;
+        }
+
+        body.theme-afternoon {
+            --bg-color: #fffbeb;
+            --card-bg: #ffffff;
+            --border-color: #fde68a;
+            --text-color: #b45309;
+            --text-muted: #fbbf24;
+            --accent-color: #d97706;
+        }
+
+        body.theme-night {
+            --bg-color: #0b0f19;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-color: #2563eb;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0b0f19;
-            color: #f8fafc;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
             padding: 16px;
+            transition: background-color 0.5s ease, color 0.5s ease;
         }
         .container {
             max-width: 800px;
             margin: 0 auto;
         }
         .card {
-            background: #1e293b;
-            border: 1px solid #334155;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 16px;
             margin-bottom: 16px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.5s ease, border-color 0.5s ease;
         }
+
+        /* ส่วนแสดงรูปฟาร์ม Banner */
+        .farm-banner {
+            width: 100%;
+            height: 160px;
+            border-radius: 10px;
+            object-fit: cover;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
         input, select, button {
-            background: #0f172a;
-            border: 1px solid #475569;
-            color: #f8fafc;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
             padding: 10px;
             border-radius: 8px;
             width: 100%;
@@ -41,28 +91,25 @@
         button {
             cursor: pointer;
             font-weight: bold;
-            transition: background 0.2s;
+            transition: opacity 0.2s;
         }
         button:hover {
-            background: #334155;
+            opacity: 0.9;
         }
         .btn-primary {
-            background: #2563eb;
-            border-color: #1d4ed8;
-        }
-        .btn-primary:hover {
-            background: #1d4ed8;
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: #ffffff;
         }
         .btn-success {
             background: #059669;
             border-color: #047857;
-        }
-        .btn-success:hover {
-            background: #047857;
+            color: #ffffff;
         }
         .btn-danger {
             background: #dc2626;
             border-color: #b91c1c;
+            color: #ffffff;
         }
         table {
             width: 100%;
@@ -70,8 +117,8 @@
             margin-top: 10px;
         }
         th {
-            background: #334155;
-            color: #f8fafc;
+            background: var(--border-color);
+            color: var(--text-color);
             padding: 8px;
             font-size: 12px;
             text-align: left;
@@ -83,23 +130,35 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: #0f172a;
-            border-top: 2px solid #475569;
+            background: var(--card-bg);
+            border-top: 2px solid var(--border-color);
             padding: 16px;
             box-shadow: 0 -4px 10px rgba(0,0,0,0.5);
             z-index: 1000;
             max-height: 50vh;
             overflow-y: auto;
         }
+
+        .time-badge {
+            display: inline-block;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: var(--border-color);
+            color: var(--text-color);
+            margin-left: 8px;
+        }
     </style>
 </head>
-<body>
+<body id="mainBody">
 
 <div class="container">
 
     <!-- 1. ส่วนเข้าสู่ระบบ / สมัครสมาชิก (Auth Wrapper) -->
     <div id="auth-wrapper" class="card">
-        <h2 style="text-align: center; margin-top: 0;">🌾 ระบบจัดการฟาร์ม</h2>
+        <!-- เพิ่มรูปฟาร์มหน้า Login -->
+        <img src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80" alt="ละม้ายฟาร์ม" class="farm-banner">
+        <h2 style="text-align: center; margin-top: 0;">🌾 ละม้ายฟาร์ม - ระบบจัดการ</h2>
         
         <!-- หน้าเข้าสู่ระบบ -->
         <div id="login-page">
@@ -109,7 +168,7 @@
             <label>รหัสผ่าน</label>
             <input type="password" id="loginPassInput" placeholder="กรอกรหัสผ่าน หรือ 1234">
             <button class="btn-primary" onclick="login()">เข้าสู่ระบบ</button>
-            <p style="text-align: center; font-size: 12px; color: #94a3b8; cursor: pointer;" onclick="switchAuthMode('register')">ยังไม่มีบัญชี? สมัครสมาชิกที่นี่</p>
+            <p style="text-align: center; font-size: 12px; color: var(--text-muted); cursor: pointer;" onclick="switchAuthMode('register')">ยังไม่มีบัญชี? สมัครสมาชิกที่นี่</p>
         </div>
 
         <!-- หน้าสมัครสมาชิก -->
@@ -122,17 +181,23 @@
             <label>ยืนยันรหัสผ่าน</label>
             <input type="password" id="regConfirmPassInput" placeholder="กรอกรหัสผ่านอีกครั้ง">
             <button class="btn-success" onclick="register()">ยืนยันการสมัคร</button>
-            <p style="text-align: center; font-size: 12px; color: #94a3b8; cursor: pointer;" onclick="switchAuthMode('login')">มีบัญชีอยู่แล้ว? เข้าสู่ระบบ</p>
+            <p style="text-align: center; font-size: 12px; color: var(--text-muted); cursor: pointer;" onclick="switchAuthMode('login')">มีบัญชีอยู่แล้ว? เข้าสู่ระบบ</p>
         </div>
     </div>
 
     <!-- 2. หน้าหลักของแอปพลิเคชัน (ซ่อนไว้จนกว่าจะ Login ผ่าน) -->
     <div id="app-page" style="display: none;">
         
-        <!-- แถบต้อนรับและปุ่มออกจากระบบ -->
+        <!-- แถบต้อนรับและปุ่มออกจากระบบ พร้อมแสดงสถานะเวลา -->
         <div class="card" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
-            <span>👤 สวัสดี, <strong id="displayName"></strong></span>
+            <span>👤 สวัสดี, <strong id="displayName"></strong> <span id="timeStatusBadge" class="time-badge">กำลังโหลดเวลา...</span></span>
             <button class="btn-danger" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px;" onclick="logout()">ออกจากระบบ</button>
+        </div>
+
+        <!-- การ์ดรูปภาพฟาร์มประจำวันในหน้าหลัก -->
+        <div class="card" style="padding: 10px; text-align: center;">
+            <img src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80" alt="บรรยากาศละม้ายฟาร์ม" class="farm-banner" style="margin-bottom: 0;">
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">🌱 ละม้ายฟาร์ม - พื้นที่เพื่อการเกษตรยั่งยืน</div>
         </div>
 
         <!-- ช่องค้นหาสินค้าด่วน -->
@@ -141,7 +206,7 @@
             <input type="text" id="searchFilter" placeholder="พิมพ์ชื่อเพื่อค้นหา..." oninput="filterButtons(this.value)">
         </div>
 
-        <!-- พื้นที่แสดงกลุ่มสินค้าและปุ่มสินค้า (สร้างโดย JS: renderGroupContainers & renderButtons) -->
+        <!-- พื้นที่แสดงกลุ่มสินค้าและปุ่มสินค้า -->
         <div class="card">
             <h3>📦 รายการสินค้าในระบบ</h3>
             <div id="groups-container"></div>
@@ -188,8 +253,8 @@
             <input type="text" id="expenseDetail" placeholder="ชื่อรายการ..." oninput="onTypeDebounce(this)">
 
             <!-- กล่องเทียบราคากลางอัตโนมัติ -->
-            <div id="priceCompareBox" style="display: none; background: #0f172a; padding: 8px 12px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 12px; font-size: 13px; justify-content: space-between; align-items: center;">
-                <span>💡 ราคากลางอ้างอิง: <strong id="marketPriceDisplay" style="color: #60a5fa;">0</strong> <span id="marketPriceUnit" style="color: #94a3b8;">฿</span></span>
+            <div id="priceCompareBox" style="display: none; background: var(--bg-color); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px; font-size: 13px; justify-content: space-between; align-items: center;">
+                <span>💡 ราคากลางอ้างอิง: <strong id="marketPriceDisplay" style="color: var(--accent-color);">0</strong> <span id="marketPriceUnit" style="color: var(--text-muted);">฿</span></span>
             </div>
 
             <div style="display: flex; gap: 10px;">
@@ -216,7 +281,7 @@
             </select>
 
             <div style="text-align: right; font-size: 15px; margin-bottom: 12px; font-weight: bold;">
-                รวมเป็นเงินทั้งสิ้น: <span id="displayTotal" style="color: #38bdf8;">0</span> บาท
+                รวมเป็นเงินทั้งสิ้น: <span id="displayTotal" style="color: var(--accent-color);">0</span> บาท
             </div>
 
             <div style="display: flex; gap: 10px;">
@@ -262,13 +327,40 @@
 <!-- 5. Drawer สำหรับแสดงข้อมูลความรู้ AI ด้านล่างจอ -->
 <div id="knowledge-drawer">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <h4 id="knowledge-title" style="margin: 0; color: #60a5fa; font-size: 14px;">💡 ข้อมูล</h4>
-        <button onclick="closeDrawer()" style="background: none; border: none; color: #94a3b8; font-size: 16px; cursor: pointer; width: auto; margin: 0; padding: 0;">✕</button>
+        <h4 id="knowledge-title" style="margin: 0; color: var(--accent-color); font-size: 14px;">💡 ข้อมูล</h4>
+        <button onclick="closeDrawer()" style="background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; width: auto; margin: 0; padding: 0;">✕</button>
     </div>
     <div id="knowledge-content"></div>
 </div>
 
-<!-- เชื่อมโยงไฟล์ JavaScript ของคุณ (ตัวอย่างเช่น script.js) -->
+<script>
+    // ฟังก์ชันตรวจสอบและเปลี่ยนธีมตามช่วงเวลาอัตโนมัติ
+    function applyTimeBasedTheme() {
+        const hour = new Date().getHours();
+        const body = document.getElementById('mainBody');
+        const badge = document.getElementById('timeStatusBadge');
+
+        body.classList.remove('theme-morning', 'theme-afternoon', 'theme-night');
+
+        if (hour >= 6 && hour < 12) {
+            body.classList.add('theme-morning');
+            if (badge) badge.textContent = '🌅 ช่วงเช้า';
+        } else if (hour >= 12 && hour < 18) {
+            body.classList.add('theme-afternoon');
+            if (badge) badge.textContent = '☀️ ช่วงบ่าย';
+        } else {
+            body.classList.add('theme-night');
+            if (badge) badge.textContent = '🌙 ช่วงค่ำ/กลางคืน';
+        }
+    }
+
+    // เรียกทำงานทันทีเมื่อโหลดหน้าเว็บ
+    window.addEventListener('DOMContentLoaded', () => {
+        applyTimeBasedTheme();
+    });
+</script>
+
+<!-- เชื่อมโยงไฟล์ JavaScript ของคุณ -->
 <script src="script.js"></script>
 
 </body>
