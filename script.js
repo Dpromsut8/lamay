@@ -11,7 +11,7 @@ const DEBOUNCE_DELAY = 800;
 let currentSelectedUnit = "หน่วย";
 
 let farmData = JSON.parse(localStorage.getItem('farmData')) || [];
-let farmDataStorage = JSON.parse(localStorage.getItem('farmDataStorage')) || {
+let database.js = JSON.parse(localStorage.getItem('database.js')) || {
     "pets-group": [{name: "🐔 ไก่ไข่", marketPrice: 240, unit: "ตัว"}, {name: "🐟 ปลานิล", marketPrice: 8, unit: "ตัว"}],
     "plants-group": [{name: "🌿 มะกรูด", marketPrice: 20, unit: "ลูก"}, {name: "🍄 เห็ดนางฟ้าภูฐาน", marketPrice: 15, unit: "กก."}, {name: "🌿 ชะอม", marketPrice: 20, unit: "กำ"}],
     "consumable-group": [{name: "🛢️ ปั๊มน้ำอินเวอร์เตอร์ 2 แรงม้า", marketPrice: 2590, unit: "ตัว"}]
@@ -23,7 +23,7 @@ let groupTitles = JSON.parse(localStorage.getItem('groupTitles')) || {
     "consumable-group": "วัสดุสิ้นเปลือง"
 };
 
-const smartMarketData = {
+const database.js = {
     "มะกรูด": { marketPrice: 20, group: "plants-group", emoji: "🌿", unit: "ลูก" },
     "มะนาว": { marketPrice: 4, group: "plants-group", emoji: "🍋", unit: "ลูก" },
     "มะละกอ": { marketPrice: 25, group: "plants-group", emoji: "🥭", unit: "ลูก" },
@@ -58,17 +58,17 @@ function checkAndUpdateDailyMarketPrices() {
     const lastUpdateDate = localStorage.getItem('lastMarketUpdateDate');
 
     if (lastUpdateDate !== todayStr) {
-        for (let groupId in farmDataStorage) {
-            farmDataStorage[groupId].forEach(item => {
-                for (let key in smartMarketData) {
+        for (let groupId in database.js) {
+            database.js[groupId].forEach(item => {
+                for (let key in database.js) {
                     if (item.name.includes(key)) {
-                        item.marketPrice = smartMarketData[key].marketPrice;
-                        item.unit = smartMarketData[key].unit;
+                        item.marketPrice = database.js[key].marketPrice;
+                        item.unit = database.js[key].unit;
                     }
                 }
             });
         }
-        localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
+        localStorage.setItem('database.js', JSON.stringify(database.js));
         localStorage.setItem('lastMarketUpdateDate', todayStr);
     }
 }
@@ -200,27 +200,27 @@ function initCollapsibleAddItem() {
 
 function removeEmptyGroups() {
     let modified = false;
-    for (let groupId in farmDataStorage) {
-        if (farmDataStorage[groupId].length === 0) {
-            delete farmDataStorage[groupId];
+    for (let groupId in database.js) {
+        if (database.js[groupId].length === 0) {
+            delete database.js[groupId];
             delete groupTitles[groupId];
             modified = true;
         }
     }
     if (modified) {
-        localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
+        localStorage.setItem('database.js', JSON.stringify(database.js));
         localStorage.setItem('groupTitles', JSON.stringify(groupTitles));
     }
 }
 
 function deleteGroup(groupId) {
     if (confirm(`คุณต้องการลบกลุ่ม "${groupTitles[groupId] || groupId}" และสินค้าทั้งหมดในกลุ่มนี้ใช่หรือไม่?`)) {
-        delete farmDataStorage[groupId];
+        delete database.js[groupId];
         if (groupTitles[groupId]) {
             delete groupTitles[groupId];
             localStorage.setItem('groupTitles', JSON.stringify(groupTitles));
         }
-        localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
+        localStorage.setItem('database.js', JSON.stringify(database.js));
 
         renderGroupContainers();
         renderButtons();
@@ -234,7 +234,7 @@ function renderGroupContainers() {
     if (!container) return;
     container.innerHTML = "";
 
-    for (let groupId in farmDataStorage) {
+    for (let groupId in database.js) {
         const title = groupTitles[groupId] || groupId.replace('-group', '');
 
         const groupHtml = `
@@ -295,12 +295,12 @@ function toggleGroupCollapse(groupId) {
 }
 
 function renderButtons(filter = "") {
-    for (let groupId in farmDataStorage) {
+    for (let groupId in database.js) {
         let container = document.getElementById(groupId);
         if (!container) continue;
         container.innerHTML = "";
 
-        farmDataStorage[groupId].forEach((item, index) => {
+        database.js[groupId].forEach((item, index) => {
             if (item.name.toLowerCase().includes(filter.toLowerCase())) {
                 const btn = document.createElement("button");
                 const isLongName = item.name.length > 15;
@@ -371,10 +371,10 @@ function renderButtons(filter = "") {
                     const newOrder = [];
                     container.querySelectorAll('[data-index]').forEach(el => {
                         const originalIndex = parseInt(el.getAttribute('data-index'));
-                        newOrder.push(farmDataStorage[groupId][originalIndex]);
+                        newOrder.push(database.js[groupId][originalIndex]);
                     });
-                    farmDataStorage[groupId] = newOrder;
-                    localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
+                    database.js[groupId] = newOrder;
+                    localStorage.setItem('database.js', JSON.stringify(database.js));
                     renderButtons(filter);
                 }
             });
@@ -383,19 +383,19 @@ function renderButtons(filter = "") {
 }
 
 function refreshSingleItemPrice(groupId, index) {
-    const item = farmDataStorage[groupId][index];
+    const item = database.js[groupId][index];
     let foundNewPrice = false;
 
-    for (let key in smartMarketData) {
+    for (let key in database.js) {
         if (item.name.includes(key)) {
-            item.marketPrice = smartMarketData[key].marketPrice;
-            item.unit = smartMarketData[key].unit;
+            item.marketPrice = database.js[key].marketPrice;
+            item.unit = database.js[key].unit;
             foundNewPrice = true;
             break;
         }
     }
 
-    localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
+    localStorage.setItem('database.js', JSON.stringify(database.js));
     renderButtons();
     
     if (foundNewPrice) {
@@ -406,7 +406,7 @@ function refreshSingleItemPrice(groupId, index) {
 }
 
 function openEditItemModal(groupId, index) {
-    const item = farmDataStorage[groupId][index];
+    const item = database.js[groupId][index];
     const newName = prompt(`⚙️ แก้ไขข้อมูลรายการ:`, item.name);
     if (newName === null) return;
 
@@ -420,7 +420,7 @@ function openEditItemModal(groupId, index) {
     item.marketPrice = parseFloat(newPrice) || 0;
     item.unit = newUnit.trim() || "หน่วย";
 
-    localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
+    localStorage.setItem('database.js', JSON.stringify(database.js));
     renderButtons();
     updateGroupSelectOptions();
     alert("✨ บันทึกการแก้ไขเรียบร้อยแล้ว!");
@@ -433,7 +433,7 @@ function updateGroupSelectOptions() {
     if (!select) return;
     select.innerHTML = "";
     
-    for (let groupId in farmDataStorage) {
+    for (let groupId in database.js) {
         const title = groupTitles[groupId] || groupId.replace('-group', '');
         const option = document.createElement("option");
         option.value = groupId;
@@ -478,12 +478,12 @@ function addNewButton() {
         groupVal = "group-" + Date.now();
         groupTitles[groupVal] = customName;
         localStorage.setItem('groupTitles', JSON.stringify(groupTitles));
-        farmDataStorage[groupVal] = [];
+        database.js[groupVal] = [];
     }
 
-    if(!farmDataStorage[groupVal]) farmDataStorage[groupVal] = [];
-    farmDataStorage[groupVal].push({ name, marketPrice, unit: unitVal });
-    localStorage.setItem('farmDataStorage', JSON.stringify(farmDataStorage));
+    if(!database.js[groupVal]) database.js[groupVal] = [];
+    database.js[groupVal].push({ name, marketPrice, unit: unitVal });
+    localStorage.setItem('database.js', JSON.stringify(database.js));
     
     renderGroupContainers();
     renderButtons();
@@ -634,9 +634,9 @@ function onTypeDebounce(inputElement) {
 function handleRealtimeSearch(query) {
     const cleanName = query.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
     let matchedData = null;
-    for (let key in smartMarketData) {
+    for (let key in database.js) {
         if (cleanName.includes(key)) {
-            matchedData = smartMarketData[key];
+            matchedData = database.js[key];
             break;
         }
     }
@@ -668,8 +668,8 @@ function displayPriceComparison(itemName, marketPrice, unit) {
 function getSmartEmoji(text) {
     const hasEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu.test(text); 
     if (hasEmoji) return text;
-    for (let key in smartMarketData) {
-        if (text.includes(key)) return smartMarketData[key].emoji + " " + text;
+    for (let key in database.js) {
+        if (text.includes(key)) return database.js[key].emoji + " " + text;
     }
     return text;
 }

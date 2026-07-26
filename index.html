@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบบัญชีฟาร์มและจัดการสินค้า - ละม้ายฟาร์ม</title>
+        <!-- ดึงฐานข้อมูลมาโหลดก่อน -->
+    
+    
+    <!-- แล้วค่อยโหลดระบบหลัก เพื่อให้ระบบหลักดึงฐานข้อมูลไปใช้ได้ -->
+    <script src="script.js"></script>
+</body>
+</html>
+
     <!-- โหลดไลบรารี SortableJS สำหรับลากสลับตำแหน่งสินค้า -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
@@ -15,9 +23,11 @@
             --text-muted: #94a3b8;
             --accent-color: #2563eb;
             --btn-text: #ffffff;
+            --item-bg: #0f172a;
+            --item-hover: #334155;
         }
 
-        /* ธีมตามช่วงเวลา */
+        /* ธีมตามช่วงเวลา: เช้า (Morning) */
         body.theme-morning {
             --bg-color: #f0fdf4;
             --card-bg: #ffffff;
@@ -26,8 +36,11 @@
             --text-muted: #4ade80;
             --accent-color: #15803d;
             --btn-text: #ffffff;
+            --item-bg: #f6fdf8;
+            --item-hover: #dcfce7;
         }
 
+        /* ธีมตามช่วงเวลา: บ่าย (Afternoon) */
         body.theme-afternoon {
             --bg-color: #fffbeb;
             --card-bg: #ffffff;
@@ -36,8 +49,11 @@
             --text-muted: #fbbf24;
             --accent-color: #d97706;
             --btn-text: #ffffff;
+            --item-bg: #fffdf4;
+            --item-hover: #fef3c7;
         }
 
+        /* ธีมตามช่วงเวลา: ค่ำ/กลางคืน (Night) */
         body.theme-night {
             --bg-color: #0b0f19;
             --card-bg: #1e293b;
@@ -46,6 +62,8 @@
             --text-muted: #94a3b8;
             --accent-color: #3b82f6;
             --btn-text: #ffffff;
+            --item-bg: #0f172a;
+            --item-hover: #334155;
         }
 
         body {
@@ -70,7 +88,7 @@
             transition: background-color 0.5s ease, border-color 0.5s ease;
         }
 
-        /* ส่วนแสดงรูปฟาร์ม Banner (แนวเกษตรพอเพียง: มีโรงเรือน สระน้ำ สวน) */
+        /* ส่วนแสดงรูปฟาร์ม Banner (แลนด์สเคปมุมสูงเกษตรพอเพียง) */
         .farm-banner {
             width: 100%;
             height: 180px;
@@ -78,7 +96,7 @@
             object-fit: cover;
             margin-bottom: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            background-color: #e2e8f0; /* สีสำรองกรณีรูปโหลดช้า */
+            background-color: #e2e8f0;
         }
 
         input, select, button {
@@ -116,6 +134,24 @@
             border-color: #b91c1c;
             color: #ffffff;
         }
+
+        /* ปรับแต่งส่วนกลุ่มสินค้าและปุ่มภายในให้เข้ากับโทนธีม */
+        .group-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .item-btn {
+            background: var(--item-bg) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-color) !important;
+        }
+        .item-btn:hover {
+            background: var(--item-hover) !important;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -128,6 +164,7 @@
             font-size: 12px;
             text-align: left;
         }
+
         /* Drawer สำหรับแสดงข้อมูลความรู้ AI */
         #knowledge-drawer {
             display: none;
@@ -161,8 +198,8 @@
 
     <!-- 1. ส่วนเข้าสู่ระบบ / สมัครสมาชิก (Auth Wrapper) -->
     <div id="auth-wrapper" class="card">
-        <!-- รูปฟาร์มแนวเกษตรพอเพียง (ใช้รูปที่มั่นใจว่าแสดงผลได้) -->
-        <img src="https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?auto=format&fit=crop&w=800&q=80" alt="ละม้ายฟาร์มเกษตรพอเพียง" class="farm-banner">
+        <!-- รูปฟาร์มแลนด์สเคปมุมสูงเกษตรพอเพียง (มีสระน้ำ บ้านตรงกลาง สวน พืชพรรณ) -->
+        <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80" alt="ละม้ายฟาร์มเกษตรพอเพียงมุมสูง" class="farm-banner">
         <h2 style="text-align: center; margin-top: 0;">🌾 ละม้ายฟาร์ม - ระบบจัดการ</h2>
         
         <!-- หน้าเข้าสู่ระบบ -->
@@ -199,10 +236,10 @@
             <button class="btn-danger" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px;" onclick="logout()">ออกจากระบบ</button>
         </div>
 
-        <!-- การ์ดรูปภาพฟาร์มประจำวันในหน้าหลัก -->
+        <!-- การ์ดรูปภาพฟาร์มประจำวันในหน้าหลัก (แลนด์สเคปมุมสูง) -->
         <div class="card" style="padding: 10px; text-align: center;">
-            <img src="https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?auto=format&fit=crop&w=800&q=80" alt="บรรยากาศละม้ายฟาร์ม" class="farm-banner" style="margin-bottom: 0;">
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">🌱 ละม้ายฟาร์ม - โคก หนอง นา & เกษตรพอเพียง</div>
+            <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80" alt="บรรยากาศละม้ายฟาร์มมุมสูง" class="farm-banner" style="margin-bottom: 0;">
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">🌱 ละม้ายฟาร์ม - โคก หนอง นา, สระน้ำ, โรงเรือน และแปลงเกษตรครบวงจร</div>
         </div>
 
         <!-- ช่องค้นหาสินค้าด่วน -->
@@ -369,6 +406,12 @@
 
 <!-- เชื่อมโยงไฟล์ JavaScript ของคุณ -->
 <script src="script.js"></script>
+
+    <!-- ดึงฐานข้อมูลมาโหลดก่อน -->
+    <script src="database.js"></script>
+    
+    <!-- แล้วค่อยโหลดระบบหลัก เพื่อให้ระบบหลักดึงฐานข้อมูลไปใช้ได้ -->
+    <script src="script.js"></script>
 
 </body>
 </html>
