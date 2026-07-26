@@ -3,15 +3,462 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบัญชีฟาร์มและจัดการสินค้า - ละม้ายฟาร์ม</title>
-        <!-- ดึงฐานข้อมูลมาโหลดก่อน -->
-    
-    
-    <!-- แล้วค่อยโหลดระบบหลัก เพื่อให้ระบบหลักดึงฐานข้อมูลไปใช้ได้ -->
-    <script src="script.js"></script>
+    <title>LAMAY - Authentication</title>
+    <style>
+        :root {
+            --bg-color: #FDFBF7; /* สีขาวนวล */
+            --text-color: #2C2C2C;
+            --accent-color: #D4AF37; /* สีทองหรูหราแบบละมุน */
+            --accent-hover: #C5A028;
+            --gray-light: #F4F1EA;
+            --gray-text: #777777;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* หน้าจอหลัก (Splash & Ripple Screen) */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            cursor: pointer;
+            transition: opacity 0.8s ease;
+        }
+
+        /* เอฟเฟกต์หยดน้ำกระเพื่อม */
+        .ripple-container {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .ripple {
+            position: absolute;
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            border-radius: 50%;
+            animation: ripple-effect 2.5s infinite cubic-bezier(0.1, 0.8, 0.3, 1);
+        }
+
+        .ripple:nth-child(2) {
+            animation-delay: 0.8s;
+        }
+
+        .ripple:nth-child(3) {
+            animation-delay: 1.6s;
+        }
+
+        @keyframes ripple-effect {
+            0% {
+                width: 50px;
+                height: 50px;
+                opacity: 1;
+            }
+            100% {
+                width: 350px;
+                height: 350px;
+                opacity: 0;
+            }
+        }
+
+        /* โลโก้กลางจอ */
+        .logo-container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .logo-text {
+            font-size: 3.5rem;
+            font-weight: 300;
+            letter-spacing: 8px;
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+
+        .logo-sub {
+            font-size: 0.9rem;
+            letter-spacing: 4px;
+            color: var(--gray-text);
+            text-transform: uppercase;
+        }
+
+        .tap-hint {
+            position: absolute;
+            bottom: 60px;
+            font-size: 0.9rem;
+            color: var(--gray-text);
+            letter-spacing: 1px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        /* คอนเทนต์หลัก (ซ่อนไว้ก่อน) */
+        .main-container {
+            display: none;
+            width: 100%;
+            max-width: 420px;
+            padding: 30px;
+            background: #FFFFFF;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: all 0.5s ease;
+        }
+
+        .main-container.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .card-logo {
+            font-size: 2rem;
+            letter-spacing: 5px;
+            margin-bottom: 25px;
+            color: var(--text-color);
+        }
+
+        /* ฟอร์มและปุ่มต่างๆ */
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--gray-text);
+            margin-bottom: 5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #E0DCD0;
+            border-radius: 10px;
+            background-color: var(--gray-light);
+            font-size: 0.95rem;
+            color: var(--text-color);
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-color);
+            background-color: #FFFFFF;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+            margin-top: 10px;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background-color: var(--text-color);
+            color: #FFFFFF;
+        }
+
+        .btn-primary:hover {
+            background-color: #444444;
+        }
+
+        .btn-social {
+            background-color: var(--gray-light);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: 1px solid #E0DCD0;
+            margin-top: 10px;
+        }
+
+        .btn-social:hover {
+            background-color: #EAE6DD;
+        }
+
+        .divider {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--gray-text);
+            font-size: 0.8rem;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #E0DCD0;
+        }
+
+        .divider::before { margin-right: 10px; }
+        .divider::after { margin-left: 10px; }
+
+        .switch-mode {
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: var(--gray-text);
+        }
+
+        .switch-mode a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .switch-mode a:hover {
+            text-decoration: underline;
+        }
+
+        /* หน้าเข้าสู่ระบบ 1-Click สำหรับครั้งที่ 2 */
+        #one-click-view {
+            display: none;
+        }
+
+        .avatar-circle {
+            width: 80px;
+            height: 80px;
+            background-color: var(--gray-light);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: var(--accent-color);
+            border: 2px solid var(--accent-color);
+        }
+
+        .user-greeting {
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            color: var(--text-center);
+        }
+
+        .logout-link {
+            margin-top: 15px;
+            font-size: 0.8rem;
+            color: var(--gray-text);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- หน้าแรก: โลโก้ + หยดน้ำกระเพื่อม -->
+    <div id="splash-screen" onclick="proceedToAuth()">
+        <div class="ripple-container">
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+        </div>
+        <div class="logo-container">
+            <h1 class="logo-text">LAMAY</h1>
+            <div class="logo-sub">Welcome</div>
+        </div>
+        <div class="tap-hint">แตะเพื่อเริ่มต้น</div>
+    </div>
+
+    <!-- หน้าสมัครสมาชิกครั้งแรก (Sign Up) -->
+    <div id="signup-view" class="main-container">
+        <h2 class="card-logo">LAMAY</h2>
+        <p style="margin-bottom: 20px; font-size: 0.9rem; color: var(--gray-text);">สร้างบัญชีใหม่เพื่อเริ่มต้นใช้งาน</p>
+        
+        <form onsubmit="handleSignup(event)">
+            <div class="form-group">
+                <label>ชื่อ-นามสกุล</label>
+                <input type="text" class="form-control" required placeholder="กรอกชื่อของคุณ">
+            </div>
+            <div class="form-group">
+                <label>อีเมล หรือ เบอร์โทรศัพท์</label>
+                <input type="text" class="form-control" required placeholder="email@example.com">
+            </div>
+            <div class="form-group">
+                <label>รหัสผ่าน</label>
+                <input type="password" class="form-control" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn btn-primary">สมัครสมาชิก</button>
+        </form>
+
+        <div class="switch-mode">
+            มีบัญชีอยู่แล้ว? <a href="#" onclick="switchView('login')">เข้าสู่ระบบ</a>
+        </div>
+    </div>
+
+    <!-- หน้าล็อกอินปกติ (Login) -->
+    <div id="login-view" class="main-container">
+        <h2 class="card-logo">LAMAY</h2>
+        
+        <form onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label>อีเมล หรือ เบอร์โทรศัพท์</label>
+                <input type="text" id="login-email" class="form-control" required placeholder="email@example.com">
+            </div>
+            <div class="form-group">
+                <label>รหัสผ่าน</label>
+                <input type="password" class="form-control" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn btn-primary">เข้าสู่ระบบ</button>
+        </form>
+
+        <div class="divider">หรือเข้าสู่ระบบด้วย</div>
+
+        <button class="btn btn-social" onclick="simulateOneClick()">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.8 7.4l3.7 2.9C6.4 7.3 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.5 14.7c-.2-.7-.4-1.5-.4-2.7s.2-2 .4-2.7L1.8 6.4C.7 8.6 0 10.2 0 12s.7 3.4 1.8 5.6l3.7-2.9z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.6-2.3-6.5-5.3L1.8 15C3.7 18.8 7.5 23 12 23z"/></svg>
+            Google / Social Login
+        </button>
+
+        <div class="switch-mode">
+            ยังไม่มีบัญชี? <a href="#" onclick="switchView('signup')">สมัครสมาชิกครั้งแรก</a>
+        </div>
+    </div>
+
+    <!-- หน้าเข้าสู่ระบบ 1-Click (สำหรับครั้งที่ 2 เป็นต้นไป) -->
+    <div id="one-click-view" class="main-container">
+        <h2 class="card-logo">LAMAY</h2>
+        <div class="avatar-circle">L</div>
+        <div class="user-greeting">ยินดีต้อนรับกลับมา<br><strong id="user-display-name">คุณผู้ใช้งาน</strong></div>
+        
+        <button class="btn btn-primary" onclick="executeOneClickLogin()">เข้าสู่ระบบใน 1 Click</button>
+        
+        <div class="logout-link" onclick="resetToFirstTime()">ไม่ใช่บัญชีของคุณ? (สลับบัญชี)</div>
+    </div>
+
+    <script>
+        // ตรวจสอบสถานะการเคยล็อกอิน (จำลองการเก็บข้อมูลในเครื่อง)
+        window.addEventListener('DOMContentLoaded', () => {
+            const isRegistered = localStorage.getItem('lamay_registered');
+            // ถ้าระบบจำได้ว่าเคยสมัคร/ล็อกอินแล้ว จะเตรียมโหมด 1-Click ไว้
+        });
+
+        function proceedToAuth() {
+            const splash = document.getElementById('splash-screen');
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.display = 'none';
+                
+                // ตรวจสอบว่าเคยสมัครหรือยัง
+                const isRegistered = localStorage.getItem('lamay_registered');
+                const savedUser = localStorage.getItem('lamay_user') || 'สมาชิก LAMAY';
+
+                if (isRegistered === 'true') {
+                    // หากเป็นครั้งที่ 2 เป็นต้นไป แสดงหน้า 1-Click พร้อมโลโก้
+                    document.getElementById('user-display-name').innerText = savedUser;
+                    showContainer('one-click-view');
+                } else {
+                    // ครั้งแรก ไปหน้าสมัครสมาชิก
+                    showContainer('signup-view');
+                }
+            }, 800);
+        }
+
+        function showContainer(containerId) {
+            document.querySelectorAll('.main-container').forEach(el => {
+                el.style.display = 'none';
+                el.classList.remove('active');
+            });
+            const target = document.getElementById(containerId);
+            target.style.display = 'block';
+            setTimeout(() => target.classList.add('active'), 50);
+        }
+
+        function switchView(type) {
+            if (type === 'login') {
+                showContainer('login-view');
+            } else {
+                showContainer('signup-view');
+            }
+        }
+
+        function handleSignup(event) {
+            event.preventDefault();
+            // จำลองการสมัครสมาชิกสำเร็จ บันทึกสถานะลง localStorage
+            localStorage.setItem('lamay_registered', 'true');
+            localStorage.setItem('lamay_user', 'สมาชิกใหม่ LAMAY');
+            alert('สมัครสมาชิกสำเร็จ!');
+            showContainer('one-click-view');
+            document.getElementById('user-display-name').innerText = 'สมาชิกใหม่ LAMAY';
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const emailInput = document.getElementById('login-email').value;
+            // จำลองการล็อกอินสำเร็จ บันทึกสถานะ
+            localStorage.setItem('lamay_registered', 'true');
+            localStorage.setItem('lamay_user', emailInput);
+            alert('เข้าสู่ระบบสำเร็จ!');
+            showContainer('one-click-view');
+            document.getElementById('user-display-name').innerText = emailInput;
+        }
+
+        function executeOneClickLogin() {
+            alert('เข้าสู่ระบบสำเร็จใน 1 คลิก ยินดีต้อนรับสู่ LAMAY ครับ!');
+            // สามารถเปลี่ยนเส้นทางไปหน้าแดชบอร์ดหลักได้ที่นี่
+        }
+
+        function resetToFirstTime() {
+            localStorage.clear();
+            alertรีเซ็ตข้อมูลจำลองเรียบร้อย กลับสู่หน้าสมัครสมาชิกครั้งแรก;
+            showContainer('signup-view');
+        }
+    </script>
 </body>
 </html>
 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบัญชีฟาร์มและจัดการสินค้า - ละม้ายฟาร์ม</title>
+    
     <!-- โหลดไลบรารี SortableJS สำหรับลากสลับตำแหน่งสินค้า -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
@@ -404,14 +851,11 @@
     });
 </script>
 
-<!-- เชื่อมโยงไฟล์ JavaScript ของคุณ -->
-<script src="script.js"></script>
+<!-- ดึงฐานข้อมูล 142 รายการมาโหลดก่อนเสมอ -->
+<script src="database.js"></script>
 
-    <!-- ดึงฐานข้อมูลมาโหลดก่อน -->
-    <script src="database.js"></script>
-    
-    <!-- แล้วค่อยโหลดระบบหลัก เพื่อให้ระบบหลักดึงฐานข้อมูลไปใช้ได้ -->
-    <script src="script.js"></script>
+<!-- โหลดไฟล์สคริปต์การทำงานหลักตามมา -->
+<script src="script.js"></script>
 
 </body>
 </html>
