@@ -14,6 +14,7 @@
             --text-color: #f8fafc;
             --text-muted: #94a3b8;
             --accent-color: #2563eb;
+            --btn-text: #ffffff;
         }
 
         /* ธีมตามช่วงเวลา */
@@ -23,7 +24,8 @@
             --border-color: #bbf7d0;
             --text-color: #166534;
             --text-muted: #4ade80;
-            --accent-color: #16a34a;
+            --accent-color: #15803d; /* เขียวเข้มพอดีตา */
+            --btn-text: #ffffff;
         }
 
         body.theme-afternoon {
@@ -32,7 +34,8 @@
             --border-color: #fde68a;
             --text-color: #b45309;
             --text-muted: #fbbf24;
-            --accent-color: #d97706;
+            --accent-color: #d97706; /* ส้มทองอบอุ่น */
+            --btn-text: #ffffff;
         }
 
         body.theme-night {
@@ -41,7 +44,8 @@
             --border-color: #334155;
             --text-color: #f8fafc;
             --text-muted: #94a3b8;
-            --accent-color: #2563eb;
+            --accent-color: #3b82f6; /* ฟ้าเข้มโมเดิร์น */
+            --btn-text: #ffffff;
         }
 
         body {
@@ -66,7 +70,7 @@
             transition: background-color 0.5s ease, border-color 0.5s ease;
         }
 
-        /* ส่วนแสดงรูปฟาร์ม Banner */
+        /* ส่วนแสดงรูปฟาร์ม Banner (แนวเกษตรพอเพียง: มีโรงเรือน สระน้ำ สวน) */
         .farm-banner {
             width: 100%;
             height: 160px;
@@ -99,7 +103,7 @@
         .btn-primary {
             background: var(--accent-color);
             border-color: var(--accent-color);
-            color: #ffffff;
+            color: var(--btn-text);
         }
         .btn-success {
             background: #059669;
@@ -146,7 +150,7 @@
             border-radius: 12px;
             background: var(--border-color);
             color: var(--text-color);
-            margin-left: 8px;
+      		margin-left: 8px;
         }
     </style>
 </head>
@@ -156,8 +160,8 @@
 
     <!-- 1. ส่วนเข้าสู่ระบบ / สมัครสมาชิก (Auth Wrapper) -->
     <div id="auth-wrapper" class="card">
-        <!-- เพิ่มรูปฟาร์มหน้า Login -->
-        <img src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80" alt="ละม้ายฟาร์ม" class="farm-banner">
+        <!-- รูปฟาร์มแนวเกษตรพอเพียง (มีโรงเรือน สระน้ำ สวน) -->
+        <img src="https://images.unsplash.com/photo-1592417817098-8f3d6eb26685?auto=format&fit=crop&w=800&q=80" alt="ละม้ายฟาร์มเกษตรพอเพียง" class="farm-banner">
         <h2 style="text-align: center; margin-top: 0;">🌾 ละม้ายฟาร์ม - ระบบจัดการ</h2>
         
         <!-- หน้าเข้าสู่ระบบ -->
@@ -194,10 +198,10 @@
             <button class="btn-danger" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px;" onclick="logout()">ออกจากระบบ</button>
         </div>
 
-        <!-- การ์ดรูปภาพฟาร์มประจำวันในหน้าหลัก -->
+        <!-- การ์ดรูปภาพฟาร์มประจำวันในหน้าหลัก (แนวเกษตรพอเพียง สระน้ำและแปลงเกษตร) -->
         <div class="card" style="padding: 10px; text-align: center;">
-            <img src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80" alt="บรรยากาศละม้ายฟาร์ม" class="farm-banner" style="margin-bottom: 0;">
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">🌱 ละม้ายฟาร์ม - พื้นที่เพื่อการเกษตรยั่งยืน</div>
+            <img src="https://images.unsplash.com/photo-1592417817098-8f3d6eb26685?auto=format&fit=crop&w=800&q=80" alt="บรรยากาศละม้ายฟาร์ม" class="farm-banner" style="margin-bottom: 0;">
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">🌱 ละม้ายฟาร์ม - โคก หนอง นา & เกษตรพอเพียง</div>
         </div>
 
         <!-- ช่องค้นหาสินค้าด่วน -->
@@ -214,6 +218,7 @@
 
         <!-- ฟอร์มเพิ่มสินค้าใหม่เข้าหมวดหมู่ -->
         <div class="card">
+            <h3 style="margin-top: 0; color: var(--accent-color);">➕ เพิ่มรายการสินค้าใหม่</h3>
             <label>ชื่อสินค้าใหม่</label>
             <input type="text" id="newItemName" placeholder="เช่น 🍋 มะนาวแป้น">
             
@@ -239,7 +244,8 @@
             </select>
             <input type="text" id="customUnitName" placeholder="พิมพ์หน่วยของคุณ..." style="display: none;">
 
-            <button class="btn-primary" onclick="addNewButton()">➕ เพิ่มสินค้าใหม่</button>
+            <!-- ปุ่มบันทึกสินค้าใหม่ ใช้สีธีมเดียวกัน (--accent-color) -->
+            <button class="btn-primary" onclick="addNewButton()">เพิ่มสินค้าใหม่</button>
         </div>
 
         <!-- 3. ส่วนบัญชีฟาร์ม (Account Panel) สำหรับกรอกรายรับ-รายจ่าย -->
