@@ -5,7 +5,19 @@ export default function Inventory() {
   const [groupTitles, setGroupTitles] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   
-  // ฟอร์มสำหรับเพิ่มสินค้าใหม่
+  // ฟ// ค่าเริ่มต้นสำรองกรณีในแอป APK ยังไม่มีข้อมูล
+const DEFAULT_GROUPS = {
+  "pets-group": "สัตว์เลี้ยง",
+  "plants-group": "พืชสวน",
+  "consumable-group": "วัสดุสิ้นเปลือง"
+};
+
+// ใน Component Inventory:
+const [groupTitles, setGroupTitles] = useState(() => {
+  const saved = localStorage.getItem('groupTitles');
+  return saved ? JSON.parse(saved) : DEFAULT_GROUPS;
+});
+อร์มสำหรับเพิ่มสินค้าใหม่
   const [newItemName, setNewItemName] = useState('');
   const [newItemMarketPrice, setNewItemMarketPrice] = useState('');
   const [newItemUnit, setNewItemUnit] = useState('ตัว');
