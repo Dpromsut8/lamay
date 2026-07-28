@@ -15,7 +15,6 @@ let currentSelectedUnit = "หน่วย";
 
 let farmData = JSON.parse(localStorage.getItem('farmData')) || [];
 
-// จัดการฐานข้อมูลรายการสินค้าในฟาร์ม
 let farmItemsDB = JSON.parse(localStorage.getItem('farmItemsDB')) || {
     "pets-group": [{name: "🐔 ไก่ไข่", marketPrice: 240, unit: "ตัว"}, {name: "🐟 ปลานิล", marketPrice: 8, unit: "ตัว"}],
     "plants-group": [{name: "🌿 มะกรูด", marketPrice: 20, unit: "ลูก"}, {name: "🍄 เห็ดนางฟ้าภูฐาน", marketPrice: 15, unit: "กก."}, {name: "🌿 ชะอม", marketPrice: 20, unit: "กำ"}],
@@ -28,7 +27,6 @@ let groupTitles = JSON.parse(localStorage.getItem('groupTitles')) || {
     "consumable-group": "วัสดุสิ้นเปลือง"
 };
 
-// ฐานข้อมูลราคากลางอ้างอิง
 const marketPricesDB = {
     "มะกรูด": { marketPrice: 20, group: "plants-group", emoji: "🌿", unit: "ลูก" },
     "มะนาว": { marketPrice: 4, group: "plants-group", emoji: "🍋", unit: "ลูก" },
@@ -704,24 +702,6 @@ async function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
     let aiSummaryText = "";
     let foundAI = false;
     
-    for (let key in smartAISummaries) {
-        if (pureSearchName.includes(key)) {
-            aiSummaryText = smartAISummaries[key];
-            foundAI = true;
-            break;
-        }
-    }
-
-    const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`การดูแลรักษา วิธีนำไปใช้งาน ${pureSearchName}`)}`;
-
-    async function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
-    if (!rawItemName) return;
-    const pureSearchName = rawItemName.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
-
-    let aiSummaryText = "";
-    let foundAI = false;
-    
-    // ตรวจสอบข้อมูลจาก database (ต้องแน่ใจว่าโหลดตัวแปร smartAISummaries มาแล้ว)
     if (typeof smartAISummaries !== 'undefined') {
         for (let key in smartAISummaries) {
             if (pureSearchName.includes(key)) {
@@ -754,13 +734,10 @@ function showInlineKnowledge(title, htmlContent) {
     document.getElementById('knowledge-content').innerHTML = htmlContent;
     box.style.display = 'block';
     
-    // เลื่อนหน้าจอไปที่รูปภาพอัตโนมัติเพื่อให้เห็นข้อมูล
     box.parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function closeInlineKnowledge() {
     const box = document.getElementById('inline-knowledge-box');
     if (box) box.style.display = 'none';
-}
-
 }
