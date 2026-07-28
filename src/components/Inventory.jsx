@@ -11,6 +11,9 @@ export default function Inventory() {
   const [groupSelect, setGroupSelect] = useState('pets-group');
   const [newGroupName, setNewGroupName] = useState('');
 
+  // สถานะเปิด-ปิด Modal สำหรับเลือกกลุ่มสินค้า (แก้ปัญหาจอมือถือไม่แสดง Option)
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -63,6 +66,7 @@ export default function Inventory() {
     setNewItemName('');
     setNewItemMarketPrice('');
     setNewGroupName('');
+    setGroupSelect('pets-group');
     alert("เพิ่มสินค้าใหม่สำเร็จ!");
   };
 
@@ -79,7 +83,7 @@ export default function Inventory() {
               value={newItemName} 
               onChange={(e) => setNewItemName(e.target.value)}
               placeholder="ระบุชื่อสินค้า..." 
-              style={{ width: '100%', padding: '8px', background: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff', marginTop: '4px' }}
+              style={{ width: '100%', padding: '8px', background: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff', marginTop: '4px', boxSizing: 'border-box' }}
             />
           </div>
 
@@ -89,33 +93,94 @@ export default function Inventory() {
               type="number" 
               value={newItemMarketPrice} 
               onChange={(e) => setNewItemMarketPrice(e.target.value)}
-              style={{ width: '100%', padding: '8px', background: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff', marginTop: '4px' }}
+              placeholder="0"
+              style={{ width: '100%', padding: '8px', background: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff', marginTop: '4px', boxSizing: 'border-box' }}
             />
           </div>
 
+          {/* ส่วนเลือกกลุ่มสินค้าแบบ Custom Dropdown (กดง่ายบนมือถือ) */}
           <div style={{ marginBottom: '10px' }}>
             <label style={{ fontSize: '12px', color: '#94a3b8' }}>เลือกกลุ่มสินค้า</label>
-            <select 
-              value={groupSelect} 
-              onChange={(e) => setGroupSelect(e.target.value)}
-              style={{ width: '100%', padding: '8px', background: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff', marginTop: '4px' }}
+            <div 
+              onClick={() => setIsGroupModalOpen(true)}
+              style={{ 
+                width: '100%', padding: '10px', background: '#1e293b', border: '1px solid #475569', 
+                borderRadius: '8px', color: '#fff', marginTop: '4px', cursor: 'pointer', 
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxSizing: 'border-box' 
+              }}
             >
-              {Object.keys(groupTitles).map((gKey) => (
-                <option key={gKey} value={gKey}>กลุ่ม: {groupTitles[gKey]}</option>
-              ))}
-              <option value="new">-- สร้างกลุ่มใหม่ --</option>
-            </select>
+              <span>{groupSelect === 'new' ? '➕ -- สร้างกลุ่มใหม่ --' : `📁 ${groupTitles[groupSelect] || groupSelect}`}</span>
+              <span style={{ fontSize: '11px', color: '#94a3b8' }}>▼</span>
+            </div>
+
+            {/* หน้าต่างป๊อปอัปเลือกกลุ่มสินค้า */}
+            {isGroupModalOpen && (
+              <div style={{
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                background: 'rgba(0,0,0,0.75)', zIndex: 9999,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
+              }}>
+                <div style={{
+                  background: '#1e293b', border: '1px solid #475569', borderRadius: '12px',
+                  width: '100%', maxWidth: '320px', padding: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
+                }}>
+                  <div style={{ fontWeight: 'bold', color: '#38bdf8', marginBottom: '12px', fontSize: '14px', borderBottom: '1px solid #334155', paddingBottom: '8px' }}>
+                    📁 เลือกกลุ่มสินค้า
+                  </div>
+                  
+                  <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '12px' }}>
+                    {Object.keys(groupTitles).map((gKey) => (
+                      <div 
+                        key={gKey} 
+                        onClick={() => {
+                          setGroupSelect(gKey);
+                          setIsGroupModalOpen(false);
+                        }}
+                        style={{ 
+                          padding: '10px', background: groupSelect === gKey ? '#334155' : 'transparent', 
+                          borderRadius: '6px', marginBottom: '4px', cursor: 'pointer', color: '#fff', fontSize: '13px' 
+                        }}
+                      >
+                        {groupTitles[gKey]}
+                      </div>
+                    ))}
+
+                    <div 
+                      onClick={() => {
+                        setGroupSelect('new');
+                        setIsGroupModalOpen(false);
+                      }}
+                      style={{ 
+                        padding: '10px', background: groupSelect === 'new' ? '#334155' : 'transparent', 
+                        borderRadius: '6px', marginBottom: '4px', cursor: 'pointer', color: '#34d399', fontSize: '13px', fontWeight: 'bold' 
+                      }}
+                    >
+                      ➕ -- สร้างกลุ่มใหม่ --
+                    </div>
+                  </div>
+
+                  <button 
+                    type="button" 
+                    onClick={() => setIsGroupModalOpen(false)}
+                    style={{ width: '100%', padding: '8px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                  >
+                    ปิด
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
+          {/* ช่องกรอกชื่อกลุ่มใหม่ (จะแสดงเฉพาะเมื่อเลือกสร้างกลุ่มใหม่) */}
           {groupSelect === 'new' && (
-            <div style={{ marginBottom: '10px' }}>
-              <label style={{ fontSize: '12px', color: '#94a3b8' }}>ชื่อกลุ่มใหม่</label>
+            <div style={{ marginBottom: '10px', background: '#111827', padding: '10px', borderRadius: '8px', border: '1px dashed #34d399' }}>
+              <label style={{ fontSize: '12px', color: '#34d399', fontWeight: 'bold' }}>ตั้งชื่อกลุ่มสินค้าใหม่</label>
               <input 
                 type="text" 
                 value={newGroupName} 
                 onChange={(e) => setNewGroupName(e.target.value)}
                 placeholder="ระบุชื่อกลุ่มสินค้าใหม่..." 
-                style={{ width: '100%', padding: '8px', background: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff', marginTop: '4px' }}
+                style={{ width: '100%', padding: '8px', background: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff', marginTop: '6px', boxSizing: 'border-box' }}
               />
             </div>
           )}
@@ -125,7 +190,7 @@ export default function Inventory() {
             <select 
               value={newItemUnit} 
               onChange={(e) => setNewItemUnit(e.target.value)}
-              style={{ width: '100%', padding: '8px', background: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff', marginTop: '4px' }}
+              style={{ width: '100%', padding: '8px', background: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff', marginTop: '4px', boxSizing: 'border-box' }}
             >
               <option value="ตัว">ตัว</option>
               <option value="กก.">กก.</option>
@@ -150,7 +215,7 @@ export default function Inventory() {
           placeholder="พิมพ์ชื่อเพื่อค้นหา..." 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ width: '100%', padding: '8px', background: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff', marginBottom: '12px' }}
+          style={{ width: '100%', padding: '8px', background: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff', marginBottom: '12px', boxSizing: 'border-box' }}
         />
 
         {Object.keys(farmItemsDB).map((groupId) => {
