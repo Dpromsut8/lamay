@@ -11,9 +11,6 @@ export default function Inventory() {
   const [groupSelect, setGroupSelect] = useState('pets-group');
   const [newGroupName, setNewGroupName] = useState('');
 
-  // ควบคุมการเปิด-ปิดหน้าต่างเลือกกลุ่มสินค้าแบบ Custom บนมือถือ
-  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
-
   useEffect(() => {
     loadData();
   }, []);
@@ -96,73 +93,18 @@ export default function Inventory() {
             />
           </div>
 
-          {/* ปุ่มกดเลือกกลุ่มสินค้า (Custom Modal สำหรับมือถือ) */}
-          <div style={{ marginBottom: '10px', position: 'relative' }}>
+          <div style={{ marginBottom: '10px' }}>
             <label style={{ fontSize: '12px', color: '#94a3b8' }}>เลือกกลุ่มสินค้า</label>
-            <div 
-              onClick={() => setIsGroupModalOpen(true)}
-              style={{ width: '100%', padding: '10px', background: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff', marginTop: '4px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxSizing: 'border-box' }}
+            <select 
+              value={groupSelect} 
+              onChange={(e) => setGroupSelect(e.target.value)}
+              style={{ width: '100%', padding: '8px', background: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff', marginTop: '4px' }}
             >
-              <span>{groupSelect === 'new' ? '-- สร้างกลุ่มใหม่ --' : `กลุ่ม: ${groupTitles[groupSelect] || groupSelect}`}</span>
-              <span style={{ fontSize: '10px', color: '#94a3b8' }}>▼</span>
-            </div>
-
-            {/* กล่องเลือกกลุ่มสินค้า (Modal Popup) */}
-            {isGroupModalOpen && (
-              <div style={{
-                position: 'fixed',
-                top: 0, left: 0, right: 0, bottom: 0,
-                background: 'rgba(0,0,0,0.7)',
-                zIndex: 9999,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '20px'
-              }}>
-                <div style={{
-                  background: '#1e293b',
-                  border: '1px solid #475569',
-                  borderRadius: '12px',
-                  width: '100%',
-                  maxWidth: '320px',
-                  padding: '16px',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.6)'
-                }}>
-                  <div style={{ fontWeight: 'bold', color: '#38bdf8', marginBottom: '12px', fontSize: '14px' }}>📁 เลือกกลุ่มสินค้า</div>
-                  
-                  {Object.keys(groupTitles).map((gKey) => (
-                    <div 
-                      key={gKey} 
-                      onClick={() => {
-                        setGroupSelect(gKey);
-                        setIsGroupModalOpen(false);
-                      }}
-                      style={{ padding: '10px', background: groupSelect === gKey ? '#334155' : 'transparent', borderRadius: '6px', marginBottom: '6px', cursor: 'pointer', color: '#fff', fontSize: '13px' }}
-                    >
-                      กลุ่ม: {groupTitles[gKey]}
-                    </div>
-                  ))}
-
-                  <div 
-                    onClick={() => {
-                      setGroupSelect('new');
-                      setIsGroupModalOpen(false);
-                    }}
-                    style={{ padding: '10px', background: groupSelect === 'new' ? '#334155' : 'transparent', borderRadius: '6px', marginBottom: '12px', cursor: 'pointer', color: '#34d399', fontSize: '13px', fontWeight: 'bold' }}
-                  >
-                    -- สร้างกลุ่มใหม่ --
-                  </div>
-
-                  <button 
-                    type="button" 
-                    onClick={() => setIsGroupModalOpen(false)}
-                    style={{ width: '100%', padding: '8px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
-                  >
-                    ปิด
-                  </button>
-                </div>
-              </div>
-            )}
+              {Object.keys(groupTitles).map((gKey) => (
+                <option key={gKey} value={gKey}>กลุ่ม: {groupTitles[gKey]}</option>
+              ))}
+              <option value="new">-- สร้างกลุ่มใหม่ --</option>
+            </select>
           </div>
 
           {groupSelect === 'new' && (
