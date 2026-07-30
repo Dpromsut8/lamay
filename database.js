@@ -182,7 +182,6 @@ for (let group in farmDataStorage) {
     if (Array.isArray(farmDataStorage[group])) {
         farmDataStorage[group].forEach(item => {
             if (item && item.name) {
-                // ใช้ Regular Expression ที่ปลอดภัยและครอบคลุมในการตัด Emoji ออก
                 let cleanName = item.name.replace(/[\p{Extended_Pictographic}\u{1F300}-\u{1F9FF}]/gu, '').trim();
                 let emojiMatch = item.name.match(/^[\p{Extended_Pictographic}\u{1F300}-\u{1F9FF}]/u);
                 
@@ -209,59 +208,3 @@ function saveFarmDataStorage() {
 }
 
 export { farmDataStorage, smartMarketData, saveFarmDataStorage };
-        {name: "🍍 สับปะรดศรีราชา", marketPrice: 35, unit: "กก."},
-        {name: "🍐 สาลี่น้ำผึ้ง", marketPrice: 189, unit: "กก."},
-        {name: "🍐 สาลี่หิมะ", marketPrice: 350, unit: "กก."},
-        {name: "📦 องุ่นไข่ปลา 3 กก. (ยกลัง)", marketPrice: 300, unit: "ลัง"},
-        {name: "📦 องุ่นไซมัสคัส 2 ช่อ 4-5 กก. (ยกลัง)", marketPrice: 350, unit: "ลัง"},
-        {name: "🥑 อโวคาโดแช่แข็ง (1 กก/ถุง)", marketPrice: 190, unit: "ถุง"},
-        {name: "🥑 อโวคาโดพันธุ์ไทย บูท 7 (3 กก)", marketPrice: 100, unit: "กก."},
-        {name: "🍒 เงาะโรงเรียน", marketPrice: 80, unit: "กก."},
-        {name: "🟡 เนื้อเสาวรสแช่แข็ง (1 กก/ถุง)", marketPrice: 189, unit: "ถุง"},
-        {name: "🍈 เมล่อนเนื้อส้ม", marketPrice: 79, unit: "กก."},
-        {name: "🍈 เมล่อนเนื้อเขียว", marketPrice: 79, unit: "กก."},
-        {name: "🍋 เลม่อน", marketPrice: 120, unit: "กก."},
-        {name: "📦 เลม่อน (ยกลัง) 10 กก.", marketPrice: 1100, unit: "ลัง"},
-        {name: "🟡 เสาวรสม่วง (5 กก/ถุง)", marketPrice: 300, unit: "ถุง"}
-    ],
-    "mushrooms-group": [
-        {name: "🍄 เห็ดจืดขาว", marketPrice: 99, unit: "กก."},
-        {name: "🍄 เห็ดจืดขาว 125 กรัม", marketPrice: 18, unit: "แพ็ค"},
-        {name: "🍄 เห็ดจืดดำ", marketPrice: 99, unit: "กก."},
-        {name: "🍄 เห็ดนางฟ้า", marketPrice: 90, unit: "กก."},
-        {name: "🍄 เห็ดฟาง", marketPrice: 220, unit: "กก."},
-        {name: "🍄 เห็ดหอมสด", marketPrice: 120, unit: "กก."},
-        {name: "📦 เห็ดหูหนู (ยกลัง) 5 กก.", marketPrice: 490, unit: "ลัง"},
-        {name: "🍄 เห็ดหูหนูดำ", marketPrice: 90, unit: "กก."},
-        {name: "🍄 เห็ดเข็มทอง (ขนาด 1 กก)", marketPrice: 56, unit: "แพ็ค"},
-        {name: "🍄 เห็ดเข็มทอง ขนาด 300 กรัม", marketPrice: 17, unit: "แพ็ค"},
-        {name: "🍄 เห็ดโอเลจิ เล็ก", marketPrice: 90, unit: "กก."},
-        {name: "🍄 เห็ดโอเลจิ ใหญ่", marketPrice: 70, unit: "กก."}
-    ],
-    "onions-group": [
-        {name: "🧅 หอมแขก", marketPrice: 40, unit: "กก."},
-        {name: "📦 หอมแขก (ยกถุง 10 กก.)", marketPrice: 300, unit: "ถุง"},
-        {name: "🧅 หอมแขกจิ๋ว (อินโด)", marketPrice: 45, unit: "กก."},
-        {name: "📦 หอมแขกจิ๋ว (อินโด) ยกถุง 10 กก.", marketPrice: 280, unit: "ถุง"},
-        {name: "🧅 หอมแดง", marketPrice: 90, unit: "กก."},
-        {name: "🧅 หอมใหญ่", marketPrice: 35, unit: "กก."},
-        {name: "📦 หอมใหญ่ (ยกถุง 10 กก.)", marketPrice: 280, unit: "ถุง"},
-        {name: "🥩 เซี่ยงจี้หมู", marketPrice: 60, unit: "กก."},
-        {name: "🫘 เมล็ดกระถิน (แบบแกะแล้ว) 500 กรัม", marketPrice: 130, unit: "แพ็ค"}
-    ]
-;
-
-// ข้อมูล AI อ้างอิงเพื่อการค้นหาและการอัปเดตราคา
-const smartMarketData = {};
-for (let group in farmDataStorage) {
-    farmDataStorage[group].forEach(item => {
-        // ดึง Emoji ออกเพื่อใช้เป็น Key ให้ระบบ Search ทำงานได้ง่าย
-        let cleanName = item.name.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDE4F]|\uD83D[\uDE80-\uDEF8]/gu, '').trim();
-        smartMarketData[cleanName] = { 
-            marketPrice: item.marketPrice, 
-            group: group,
-            emoji: item.name.split(' ')[0], 
-            unit: item.unit 
-        };
-    });
-}
