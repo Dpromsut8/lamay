@@ -13,6 +13,7 @@ body {
 .page { 
     width: 100%; 
     min-height: 100vh; 
+    box-sizing: border-box;
 }
 
 .app-container {
@@ -51,12 +52,13 @@ body {
 /* ==========================================================================
    Authentication Pages (Login & Register)
    ========================================================================== */
-.auth-container { 
+.auth-container, .login-container { 
     display: flex; 
     flex-direction: column; 
     align-items: center; 
     justify-content: center; 
     min-height: 100vh;
+    height: 100vh;
     padding: 20px;
     box-sizing: border-box;
 }
@@ -110,31 +112,65 @@ body {
     justify-content: space-between;
     align-items: center;
     background: #1e293b;
-    padding: 15px 25px;
+    padding: 15px 20px;
     border-bottom: 2px solid #334155;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.game-header h1 { margin: 0; font-size: 22px; color: white; letter-spacing: 1px;}
+.game-header h1 { margin: 0; font-size: 20px; color: white; letter-spacing: 1px;}
 .game-header p { margin: 5px 0 0 0; font-size: 13px; color: #94a3b8; }
+
+/* ==========================================================================
+   Mobile Tabs (แถบสลับหน้าจอสำหรับมือถือ)
+   ========================================================================== */
+.mobile-tabs {
+    display: flex;
+    background: #1e293b;
+    padding: 10px;
+    gap: 10px;
+    border-bottom: 1px solid #334155;
+}
+
+.tab-btn {
+    flex: 1;
+    background: #334155;
+    color: #94a3b8;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+    background: #3b82f6;
+    color: white;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
 
 .dashboard-grid {
     display: flex;
-    flex-wrap: wrap; 
-    gap: 20px;
-    padding: 20px;
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
     max-width: 1200px;
     margin: 0 auto;
 }
 
+/* การจัดการแสดงผล Panel ตาม Tab (รองรับทั้งแบบเปิดตลอดและสลับ Tab) */
 .menu-panel, .account-panel {
+    display: none;
     background: #1e293b;
     padding: 20px;
     border-radius: 12px;
     border: 1px solid #334155;
-    flex: 1; 
-    min-width: 300px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.menu-panel.active-section, .account-panel.active-section {
+    display: block;
 }
 
 /* ==========================================================================
@@ -240,15 +276,15 @@ input:focus, select:focus { border-color: #60a5fa; box-shadow: 0 0 0 2px rgba(96
    ========================================================================== */
 .summary-box {
     background: #0f172a;
-    padding: 20px;
-    border-radius: 12px;
+    padding: 15px;
+    border-radius: 10px;
     text-align: center;
     border: 1px solid #334155;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
 }
 
-.summary-box p { margin: 0 0 8px 0; color: #94a3b8; font-size: 14px; }
-.summary-box h3 { margin: 0; font-size: 26px; color: white; }
+.summary-box p { margin: 0 0 5px 0; color: #94a3b8; font-size: 13px; }
+.summary-box h3 { margin: 0; font-size: 22px; color: white; }
 
 .price-compare-card {
     background: #0f172a;
@@ -340,5 +376,4 @@ input:focus, select:focus { border-color: #60a5fa; box-shadow: 0 0 0 2px rgba(96
 
 @media (max-width: 768px) {
     .price-compare-card { flex-direction: column; gap: 8px; }
-   }
-
+}
