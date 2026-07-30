@@ -1,4 +1,5 @@
 import { farmDataStorage, smartMarketData, saveFarmDataStorage } from './database.js';
+
 /**
  * ============================================================================
  * LAMAY - ละม้ายฟาร์ม & ระบบจัดการบัญชี (Core Application Script)
@@ -228,8 +229,8 @@ class LamayApp {
                 new Sortable(groupDiv, {
                     animation: 150,
                     group: 'shared',
-                    delay: 150,               // กดค้างไว้ 0.15 วิ ถึงจะเริ่มลาก (ป้องกันการแย่ง event การแตะปุ่ม)
-                    delayOnTouchOnly: true,    // ส่งผลเฉพาะบนหน้าจอมือถือ
+                    delay: 150,               
+                    delayOnTouchOnly: true,    
                     onEnd: () => this.saveProductsFromDOM()
                 });
             }
@@ -532,7 +533,7 @@ class LamayApp {
     }
 
     // ------------------------------------------------------------------------
-    // 10. BIND GLOBAL EVENTS
+    // 10. BIND GLOBAL EVENTS & AUTO-FILL ENTER
     // ------------------------------------------------------------------------
     bindEvents() {
         // Toggle Custom Group Input
@@ -549,6 +550,46 @@ class LamayApp {
             unitSelect.onchange = (e) => {
                 document.getElementById('customUnitName').style.display = e.target.value === 'custom' ? 'block' : 'none';
             };
+        }
+
+        // ดักจับการกด Enter ในช่องชื่อรายการ เพื่อ Auto-fill ข้อมูลจาก database.js
+        const itemNameInput = document.getElementById('expenseDetail'); 
+        const itemPriceInput = document.getElementById('unitPrice');      
+        const itemGroupSelect = document.getElementById('groupSelect');   
+        const itemUnitInput = document.getElementById('dynamicUnitSelect'); 
+
+        if (itemNameInput) {
+            itemNameInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault(); 
+                    
+                    let queryName = itemNameInput.value.trim();
+                    
+                    if (smartMarketData && smartMarketData[queryName]) {
+                        let itemInfo = smartMarketData[queryName];
+                        
+                        if (itemPriceInput) {
+                            itemPriceInput.value = itemInfo.marketPrice;
+                            this.calculateTotal(); 
+                        }
+                        
+                        if (itemUnitInput) {
+                            if (!Array.from(itemUnitInput.options).some(opt => opt.value === itemInfo.unit)) {
+                                itemUnitInput.add(new Option(itemInfo.unit, itemInfo.unit));
+                            }
+                            itemUnitInput.value = itemInfo.unit;
+                        }
+                        
+                        if (itemGroupSelect) {
+                            itemGroupSelect.value = itemInfo.group;
+                        }
+                        
+                        console.log("ดึงข้อมูลอัตโนมัติสำเร็จสำหรับ:", queryName);
+                    } else {
+                        console.log("ไม่พบข้อมูลสินค้าอ้างอิงในระบบ สามารถกรอกเพิ่มเองได้เลย");
+                    }
+                }
+            });
         }
     }
 }
