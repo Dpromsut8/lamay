@@ -532,6 +532,7 @@ class LamayApp {
         if (drawer) drawer.style.display = 'none';
     }function openAIDrawer() { app.openAIDrawer(); }
 function closeDrawer() { app.closeDrawer(); }
+    }
     
     // ------------------------------------------------------------------------
     // 10. BIND GLOBAL EVENTS & AUTO-FILL ENTER
