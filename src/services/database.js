@@ -3,6 +3,15 @@
  * ออกแบบสำหรับ React + Vite + Capacitor 6 (Offline-First Ready)
  */
 
+// สินค้าตั้งต้นอ้างอิงราคากลางสำหรับฟาร์ม
+const DEFAULT_PRODUCTS = [
+  { id: '1', name: 'ไข่ไก่', category: 'สัตว์เลี้ยง', standardPrice: 120, unit: 'แผง' },
+  { id: '2', name: 'เห็ดนางฟ้า', category: 'พืชสวน', standardPrice: 60, unit: 'กก.' },
+  { id: '3', name: 'ชะอม', category: 'พืชสวน', standardPrice: 30, unit: 'กำ' },
+  { id: '4', name: 'อาหารไก่', category: 'วัสดุสิ้นเปลือง', standardPrice: 450, unit: 'กระสอบ' },
+  { id: '5', name: 'ค่าไฟ/โซล่าเซลล์', category: 'ค่าใช้จ่ายระบบ', standardPrice: 1000, unit: 'หน่วย' }
+];
+
 class LamayDB {
   constructor() {
     this.dbName = 'LamayFarmDB';
@@ -73,7 +82,17 @@ class LamayDB {
     return new Promise((resolve) => {
       const store = this.getStore('products');
       const req = store.getAll();
-      req.onsuccess = () => resolve(req.result || []);
+      req.onsuccess = async () => {
+        let list = req.result || [];
+        // ถ้าฐานข้อมูลยังไม่มีสินค้า ให้ลงรายการตั้งต้นให้อัตโนมัติ
+        if (list.length === 0) {
+          for (const p of DEFAULT_PRODUCTS) {
+            await this.saveProduct(p);
+          }
+          list = DEFAULT_PRODUCTS;
+        }
+        resolve(list);
+      };
     });
   }
 
@@ -92,7 +111,8 @@ class LamayDB {
       const store = this.getStore('products', 'readwrite');
       const item = {
         ...product,
-        id: product.id || Date.now(),
+        id: String(product.id || Date.now()),
+        standardPrice: Number(product.standardPrice || product.price || 0),
         updatedAt: new Date().toISOString(),
         synced: false
       };
@@ -106,7 +126,7 @@ class LamayDB {
     await this.init();
     return new Promise((resolve) => {
       const store = this.getStore('products', 'readwrite');
-      const req = store.delete(id);
+      const req = store.delete(String(id));
       req.onsuccess = () => resolve(true);
     });
   }
@@ -122,7 +142,6 @@ class LamayDB {
       const req = store.getAll();
       req.onsuccess = () => {
         const list = req.result || [];
-        // เรียงลำดับจากวันที่ใหม่อยู่บนสุด
         list.sort((a, b) => new Date(b.date) - new Date(a.date) || b.id - a.id);
         resolve(list);
       };
@@ -140,7 +159,8 @@ class LamayDB {
       const store = this.getStore('transactions', 'readwrite');
       const item = {
         ...entry,
-        id: entry.id || Date.now(),
+        id: String(entry.id || Date.now()),
+        amount: Number(entry.amount || 0),
         updatedAt: new Date().toISOString(),
         synced: false
       };
@@ -154,7 +174,7 @@ class LamayDB {
     await this.init();
     return new Promise((resolve) => {
       const store = this.getStore('transactions', 'readwrite');
-      const req = store.delete(id);
+      const req = store.delete(String(id));
       req.onsuccess = () => resolve(true);
     });
   }
@@ -188,9 +208,6 @@ class LamayDB {
   // 📤 BACKUP / IMPORT / EXPORT (สำรองข้อมูล)
   // ==========================================
 
-  /**
-   * ดาวน์โหลดไฟล์สำรองข้อมูล JSON (ใช้ได้ทั้ง Web Browser และ Webview มือถือ)
-   */
   async exportBackupJSON() {
     const products = await this.getProducts();
     const transactions = await this.getTransactions();
@@ -216,9 +233,6 @@ class LamayDB {
     return backupData;
   }
 
-  /**
-   * นำเข้าไฟล์สำรองข้อมูล JSON เข้าสู่ระบบ
-   */
   async importBackupJSON(jsonData) {
     await this.init();
     try {
@@ -241,10 +255,6 @@ class LamayDB {
     }
   }
 
-  // ==========================================
-  // 🧹 SYSTEM RESET (ล้างข้อมูลทั้งหมด)
-  // ==========================================
-
   async clearAllData() {
     await this.init();
     return new Promise((resolve) => {
@@ -257,5 +267,5 @@ class LamayDB {
   }
 }
 
-// Export ตัวแปร Single Instance สำหรับดึงไปใช้ใน React Components ได้ทันที
 export const dbService = new LamayDB();
+
