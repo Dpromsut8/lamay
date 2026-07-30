@@ -523,15 +523,13 @@ class LamayApp {
             `;
         }
 
-        content.innerHTML = html;
+                content.innerHTML = html;
         drawer.style.display = 'block';
     }
 
     closeDrawer() {
         const drawer = document.getElementById('knowledge-drawer');
         if (drawer) drawer.style.display = 'none';
-    }function openAIDrawer() { app.openAIDrawer(); }
-function closeDrawer() { app.closeDrawer(); }
     }
     
     // ------------------------------------------------------------------------
@@ -621,6 +619,7 @@ function closeDrawer() { app.closeDrawer(); }
             });
         }
     }
+} // <--- วงเล็บปิดคลาส LamayApp ที่ถูกต้อง
 
 // Global Application Instance
 const app = new LamayApp();
