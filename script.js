@@ -1,691 +1,178 @@
-// ==========================================
-// 1. SERVICE WORKER & GLOBAL VARIABLES
-// ==========================================
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(() => console.log('Service Worker Registered'))
-    .catch((err) => console.log('Service Worker Failed', err));
-}
+/**
+ * ==========================================================
+ * 🛠️ script.js - ไฟล์ควบคุมการทำงานหลัก LAMAY Smart Farm & Accounting
+ * ==========================================================
+ */
 
-let isAdmin = false;
+// โหลดข้อมูลหมวดหมู่และรายการสินค้าจาก localStorage หรือใช้ค่าเริ่มต้นจาก database.js
+let currentFarmData = JSON.parse(localStorage.getItem('farmDataStorage')) || (typeof farmDataStorage !== 'undefined' ? farmDataStorage : {
+    "spices-group": [{name: "🌿 มะกรูด", marketPrice: 20, unit: "ลูก"}],
+    "pets-group": [{name: "🐔 ไก่ไข่", marketPrice: 240, unit: "ตัว"}]
+});
+
+// ตัวแปรควบคุมสถานะระบบ
+let expenseHistory = JSON.parse(localStorage.getItem('lamay_expenseHistory')) || [];
 let showAllHistory = false;
+let searchKeyword = '';
 let typingTimer;
 const DEBOUNCE_DELAY = 800;
 let currentSelectedUnit = "หน่วย";
 
-let farmData = JSON.parse(localStorage.getItem('farmData')) || [];
-
-let farmItemsDB = JSON.parse(localStorage.getItem('farmItemsDB')) || {
-    "pets-group": [{name: "🐔 ไก่ไข่", marketPrice: 240, unit: "ตัว"}, {name: "🐟 ปลานิล", marketPrice: 8, unit: "ตัว"}],
-    "plants-group": [{name: "🌿 มะกรูด", marketPrice: 20, unit: "ลูก"}, {name: "🍄 เห็ดนางฟ้าภูฐาน", marketPrice: 15, unit: "กก."}, {name: "🌿 ชะอม", marketPrice: 20, unit: "กำ"}],
-    "consumable-group": [{name: "🛢️ ปั๊มน้ำอินเวอร์เตอร์ 2 แรงม้า", marketPrice: 2590, unit: "ตัว"}]
-};
-
-let groupTitles = JSON.parse(localStorage.getItem('groupTitles')) || {
-    "pets-group": "สัตว์เลี้ยง",
-    "plants-group": "พืชสวน",
-    "consumable-group": "วัสดุสิ้นเปลือง"
-};
-
+// ฐานข้อมูลราคากลางอ้างอิงและอีโมจิอัตโนมัติ
 const marketPricesDB = {
-    "มะกรูด": { marketPrice: 20, group: "plants-group", emoji: "🌿", unit: "ลูก" },
-    "มะนาว": { marketPrice: 4, group: "plants-group", emoji: "🍋", unit: "ลูก" },
-    "มะละกอ": { marketPrice: 25, group: "plants-group", emoji: "🥭", unit: "ลูก" },
-    "ทุเรียน": { marketPrice: 180, group: "plants-group", emoji: "🌳", unit: "กก." },
-    "เห็ด": { marketPrice: 15, group: "plants-group", emoji: "🍄", unit: "กก." },
-    "ชะอม": { marketPrice: 20, group: "plants-group", emoji: "🌿", unit: "กำ" },
-    "ไก่": { marketPrice: 240, group: "pets-group", emoji: "🐔", unit: "ตัว" },
-    "ปลา": { marketPrice: 8, group: "pets-group", emoji: "🐟", unit: "ตัว" },
-    "ไข่": { marketPrice: 130, group: "pets-group", emoji: "🥚", unit: "แผง" },
-    "อาหาร": { marketPrice: 460, group: "consumable-group", emoji: "🌾", unit: "กระสอบ" },
-    "น้ำมัน": { marketPrice: 33, group: "consumable-group", emoji: "🛢️", unit: "ถุง" },
-    "สายไฟ": { marketPrice: 680, group: "consumable-group", emoji: "⚡", unit: "ม้วน" },
-    "ปั๊มน้ำ": { marketPrice: 2590, group: "consumable-group", emoji: "⚙️", unit: "ตัว" },
-    "มาม่า": { marketPrice: 7, group: "consumable-group", emoji: "🍜", unit: "ซอง" }
+    "มะกรูด": { marketPrice: 20, emoji: "🌿", unit: "ลูก" },
+    "มะนาว": { marketPrice: 4, emoji: "🍋", unit: "ลูก" },
+    "มะละกอ": { marketPrice: 25, emoji: "🥭", unit: "ลูก" },
+    "ทุเรียน": { marketPrice: 180, emoji: "🌳", unit: "กก." },
+    "เห็ด": { marketPrice: 15, emoji: "🍄", unit: "กก." },
+    "ชะอม": { marketPrice: 20, emoji: "🌿", unit: "กำ" },
+    "ไก่": { marketPrice: 240, emoji: "🐔", unit: "ตัว" },
+    "ปลา": { marketPrice: 8, emoji: "🐟", unit: "ตัว" },
+    "ไข่": { marketPrice: 130, emoji: "🥚", unit: "แผง" },
+    "อาหาร": { marketPrice: 460, emoji: "🌾", unit: "กระสอบ" },
+    "น้ำมัน": { marketPrice: 33, emoji: "🛢️", unit: "ถุง" },
+    "สายไฟ": { marketPrice: 680, emoji: "⚡", unit: "ม้วน" },
+    "ปั๊มน้ำ": { marketPrice: 2590, emoji: "⚙️", unit: "ตัว" }
 };
 
-const smartAISummaries = {
-    "ไก่ไข่": "การเลี้ยงไก่ไข่ประกอบด้วย 3 ส่วนหลัก ได้แก่ <strong>การจัดการโรงเรือนและอาหาร</strong>, <strong>การดูแลสุขภาพ</strong>, และ <strong>ต้นทุนราคาพันธุ์สัตว์</strong> ควรมีพื้นที่ให้ไก่เดินเพื่อลดความเครียด และให้แสงสว่าง 14-16 ชั่วโมง/วัน",
-    "ปลานิล": "ปลานิลเป็นปลาที่โตไว เลี้ยงง่าย ทนทานต่อสภาพน้ำ แนะนำให้เลี้ยงในบ่อดินลึก 1-1.5 เมตร อัตราปล่อย 3-5 ตัว/ตร.ม.",
-    "มะกรูด": "มะกรูดชอบแสงแดดจัดและน้ำปานกลาง ไม่ชอบน้ำขัง ขยายพันธุ์ด้วยการตอนกิ่ง ระวังหนอนชอนใบ",
-    "เห็ด": "การเพาะเห็ดนางฟ้า/นางรม ควรทำในโรงเรือนรักษาความชื้น 70-80% อากาศถ่ายเทสะดวก รดน้ำเช้า-เย็น เก็บผลผลิตได้ใน 7-10 วัน"
-};
-
-
-// ==========================================
-// 2. INITIALIZATION & AUTHENTICATION
-// ==========================================
+// เริ่มต้นการทำงานเมื่อหน้าเว็บโหลดเสร็จ
 window.onload = () => {
-    document.getElementById("auth-wrapper").style.display = "block";
-    document.getElementById("app-page").style.display = "none";
-    checkAndUpdateDailyMarketPrices();
+    initApp();
 };
-
-function checkAndUpdateDailyMarketPrices() {
-    const todayStr = new Date().toDateString();
-    const lastUpdateDate = localStorage.getItem('lastMarketUpdateDate');
-
-    if (lastUpdateDate !== todayStr) {
-        for (let groupId in farmItemsDB) {
-            farmItemsDB[groupId].forEach(item => {
-                for (let key in marketPricesDB) {
-                    if (item.name.includes(key)) {
-                        item.marketPrice = marketPricesDB[key].marketPrice;
-                        item.unit = marketPricesDB[key].unit;
-                    }
-                }
-            });
-        }
-        localStorage.setItem('farmItemsDB', JSON.stringify(farmItemsDB));
-        localStorage.setItem('lastMarketUpdateDate', todayStr);
-    }
-}
-
-function switchAuthMode(mode) {
-    const loginPage = document.getElementById("login-page");
-    const regPage = document.getElementById("register-page");
-    
-    if (mode === 'login') {
-        if(loginPage) loginPage.style.display = "block";
-        if(regPage) regPage.style.display = "none";
-    } else {
-        if(loginPage) loginPage.style.display = "none";
-        if(regPage) regPage.style.display = "block";
-    }
-}
-
-function register() {
-    const name = document.getElementById("regNameInput").value.trim();
-    const pass = document.getElementById("regPassInput").value;
-    const confirmPass = document.getElementById("regConfirmPassInput").value;
-
-    if (!name || !pass) return alert("กรุณากรอกชื่อผู้ใช้งานและรหัสผ่านให้ครบถ้วน");
-    if (pass !== confirmPass) return alert("รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน!");
-
-    localStorage.setItem('farmUser', JSON.stringify({ name, pass }));
-    localStorage.setItem('lamay_registered', 'true');
-    localStorage.setItem('lamay_user', name);
-    
-    alert("สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ");
-    switchAuthMode('login');
-}
-
-function login() {
-    const nameInput = document.getElementById("loginNameInput").value.trim();
-    const passInput = document.getElementById("loginPassInput").value;
-    const savedUser = JSON.parse(localStorage.getItem('farmUser'));
-
-    const isValidRegisteredUser = savedUser && savedUser.name === nameInput && savedUser.pass === passInput;
-    const isDefaultAdmin = (nameInput === "admin" && passInput === "1234");
-
-    if (isValidRegisteredUser || isDefaultAdmin) {
-        isAdmin = true;
-        document.getElementById("auth-wrapper").style.display = "none";
-        document.getElementById("app-page").style.display = "block";
-        document.getElementById("displayName").innerText = isValidRegisteredUser ? savedUser.name : "ผู้ดูแลระบบ (Admin)";
-        initApp();
-    } else {
-        alert("ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง!");
-    }
-}
-
-function logout() { location.reload(); }
 
 function initApp() {
-    const expenseDateEl = document.getElementById('expenseDate');
-    if (expenseDateEl) expenseDateEl.valueAsDate = new Date();
-    
-    removeEmptyGroups();
-    renderGroupContainers();
-    renderButtons();
-    updateGroupSelectOptions();
-    updateTable();
-    initCollapsibleAddItem();
-}
+    // กำหนดวันที่ปัจจุบันให้ช่องกรอกวันที่อัตโนมัติ
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('expenseDate');
+    if (dateInput) dateInput.value = today;
 
+    renderGroupSelect();
+    renderGroupsContainer();
+    updateAccountingSummary();
+    renderHistoryTable();
+}
 
 // ==========================================
-// 3. UI & PRODUCT MANAGEMENT
+// 1. จัดการกลุ่มสินค้า & ฟอร์ม
 // ==========================================
-function onManualUnitChange(selectedUnit) {
-    currentSelectedUnit = selectedUnit;
-}
-
-function updateUnitLabels(unit) {
-    currentSelectedUnit = unit || "หน่วย";
-    const unitSelect = document.getElementById("dynamicUnitSelect");
-    if (unitSelect) {
-        let found = false;
-        for (let i = 0; i < unitSelect.options.length; i++) {
-            if (unitSelect.options[i].value === currentSelectedUnit) {
-                unitSelect.selectedIndex = i;
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            const opt = document.createElement("option");
-            opt.value = currentSelectedUnit;
-            opt.innerText = currentSelectedUnit;
-            unitSelect.appendChild(opt);
-            unitSelect.value = currentSelectedUnit;
-        }
-    }
-}
-
-function initCollapsibleAddItem() {
-    const itemNameInput = document.getElementById('newItemName');
-    if (!itemNameInput || document.getElementById('collapsible-add-header')) return;
-
-    let container = itemNameInput.parentElement;
-    while (container && !container.querySelector('button[onclick*="addNewButton"]')) {
-        container = container.parentElement;
-        if (!container || container === document.body) break;
-    }
-    if (!container) container = itemNameInput.parentElement.parentElement;
-
-    const header = document.createElement('div');
-    header.id = 'collapsible-add-header';
-    header.style.cssText = "background: #1e293b; color: #f8fafc; padding: 12px 16px; border-radius: 12px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin: 12px 0; border: 1px solid #475569; user-select: none; font-size: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); transition: all 0.2s;";
-    header.innerHTML = `<span>➕ เพิ่มรายการสินค้าใหม่</span> <span id="add-collapse-arrow" style="color: #94a3b8; font-size: 12px;">▼</span>`;
-
-    const contentBox = document.createElement('div');
-    contentBox.id = 'collapsible-add-box';
-    contentBox.style.cssText = "display: none; background: #0f172a; padding: 14px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 12px;";
-
-    while (container.firstChild) {
-        contentBox.appendChild(container.firstChild);
-    }
-
-    const parent = container.parentNode;
-    parent.insertBefore(header, container);
-    parent.insertBefore(contentBox, container);
-    container.remove();
-
-    header.onclick = () => {
-        if (contentBox.style.display === "none") {
-            contentBox.style.display = "block";
-            document.getElementById('add-collapse-arrow').innerText = "▲";
-        } else {
-            contentBox.style.display = "none";
-            document.getElementById('add-collapse-arrow').innerText = "▼";
-        }
-    };
-}
-
-function removeEmptyGroups() {
-    let modified = false;
-    for (let groupId in farmItemsDB) {
-        if (farmItemsDB[groupId].length === 0) {
-            delete farmItemsDB[groupId];
-            delete groupTitles[groupId];
-            modified = true;
-        }
-    }
-    if (modified) {
-        localStorage.setItem('farmItemsDB', JSON.stringify(farmItemsDB));
-        localStorage.setItem('groupTitles', JSON.stringify(groupTitles));
-    }
-}
-
-function deleteGroup(groupId) {
-    if (confirm(`คุณต้องการลบกลุ่ม "${groupTitles[groupId] || groupId}" และสินค้าทั้งหมดในกลุ่มนี้ใช่หรือไม่?`)) {
-        delete farmItemsDB[groupId];
-        if (groupTitles[groupId]) {
-            delete groupTitles[groupId];
-            localStorage.setItem('groupTitles', JSON.stringify(groupTitles));
-        }
-        localStorage.setItem('farmItemsDB', JSON.stringify(farmItemsDB));
-
-        renderGroupContainers();
-        renderButtons();
-        updateGroupSelectOptions();
-    }
-}
-
-function renderGroupContainers() {
-    removeEmptyGroups(); 
-    const container = document.getElementById("groups-container");
-    if (!container) return;
-    container.innerHTML = "";
-
-    for (let groupId in farmItemsDB) {
-        const title = groupTitles[groupId] || groupId.replace('-group', '');
-
-        const groupHtml = `
-            <div style="margin-top: 12px; background: #0f172a; border-radius: 10px; border: 1px solid #334155; overflow: hidden;">
-                <div id="group-header-${groupId}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #1e293b; cursor: pointer; user-select: none;">
-                    <span style="font-weight: bold; color: #f8fafc; font-size: 14px;">📁 ${title} <span id="arrow-${groupId}" style="font-size: 11px; color: #94a3b8;">▼</span></span>
-                    <span style="font-size: 10px; color: #64748b;">(จิ้มค้าง 4 วิ เพื่อลบกลุ่ม)</span>
-                </div>
-                <div id="${groupId}" class="btn-group" style="display: flex; flex-wrap: wrap; gap: 6px; padding: 10px;"></div>
-            </div>
-        `;
-        container.insertAdjacentHTML('beforeend', groupHtml);
-        
-        setTimeout(() => {
-            const headerEl = document.getElementById(`group-header-${groupId}`);
-            if (!headerEl) return;
-            
-            let groupPressTimer;
-            let isLongPress = false;
-
-            const startPress = () => {
-                isLongPress = false;
-                groupPressTimer = setTimeout(() => {
-                    isLongPress = true;
-                    deleteGroup(groupId);
-                }, 4000);
-            };
-
-            const cancelPress = () => { clearTimeout(groupPressTimer); };
-
-            headerEl.addEventListener('mousedown', startPress);
-            headerEl.addEventListener('mouseup', cancelPress);
-            headerEl.addEventListener('touchstart', startPress);
-            headerEl.addEventListener('touchend', cancelPress);
-            headerEl.addEventListener('touchmove', cancelPress);
-
-            headerEl.addEventListener('click', (e) => {
-                if (isLongPress) {
-                    e.stopImmediatePropagation();
-                    return;
-                }
-                toggleGroupCollapse(groupId);
-            });
-        }, 0);
-    }
-}
-
-function toggleGroupCollapse(groupId) {
-    const groupContent = document.getElementById(groupId);
-    const arrow = document.getElementById(`arrow-${groupId}`);
-    if (groupContent.style.display === "none") {
-        groupContent.style.display = "flex";
-        arrow.innerText = "▼";
-    } else {
-        groupContent.style.display = "none";
-        arrow.innerText = "▶";
-    }
-}
-
-function renderButtons(filter = "") {
-    for (let groupId in farmItemsDB) {
-        let container = document.getElementById(groupId);
-        if (!container) continue;
-        container.innerHTML = "";
-
-        farmItemsDB[groupId].forEach((item, index) => {
-            if (item.name.toLowerCase().includes(filter.toLowerCase())) {
-                const btn = document.createElement("button");
-                const isLongName = item.name.length > 15;
-                
-                btn.style.cssText = `display: flex; justify-content: space-between; align-items: center; background: #1e293b; color: #cbd5e1; border: 1px solid #475569; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; width: 100%; text-align: left; gap: 6px;`;
-                btn.onmouseover = () => btn.style.borderColor = "#60a5fa";
-                btn.onmouseout = () => btn.style.borderColor = "#475569";
-                
-                btn.innerHTML = `
-                    <span class="btn-title-text" style="font-size: 12px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${item.name}</span>
-                    <span class="btn-price-badge" style="font-size: 10px; background: #334155; padding: 3px 6px; border-radius: 6px; color: #94a3b8; white-space: nowrap;" title="จิ้มค้างเพื่ออัปเดตราคากลาง">${item.marketPrice || 0} ฿/${item.unit || 'หน่วย'}</span>
-                `;
-                
-                btn.onclick = () => {
-                    const itemUnit = item.unit || "หน่วย";
-                    currentSelectedUnit = itemUnit;
-
-                    document.getElementById("expenseDetail").value = item.name;
-                    document.getElementById("unitPrice").value = item.marketPrice || ""; 
-                    document.getElementById("unitQuantity").value = 1;
-                    
-                    displayPriceComparison(item.name, item.marketPrice || 0, itemUnit);
-                    updateUnitLabels(itemUnit);
-                    calculateTotal();
-                    
-                    const cleanName = item.name.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
-                    fetchGoogleKnowledgeData(cleanName, item.name);
-                    
-                    const accountPanel = document.querySelector('.account-panel');
-                    if (accountPanel) {
-                        accountPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                };
-
-                let pressTimer;
-                const titleSpan = btn.querySelector('.btn-title-text');
-                const priceBadge = btn.querySelector('.btn-price-badge');
-
-                titleSpan.addEventListener('touchstart', () => {
-                    pressTimer = setTimeout(() => openEditItemModal(groupId, index), 600);
-                });
-                titleSpan.addEventListener('touchend', () => clearTimeout(pressTimer));
-                titleSpan.oncontextmenu = (e) => { e.preventDefault(); openEditItemModal(groupId, index); };
-
-                priceBadge.addEventListener('touchstart', () => {
-                    pressTimer = setTimeout(() => refreshSingleItemPrice(groupId, index), 600);
-                });
-                priceBadge.addEventListener('touchend', () => clearTimeout(pressTimer));
-                priceBadge.oncontextmenu = (e) => { e.preventDefault(); refreshSingleItemPrice(groupId, index); };
-
-                const wrapper = document.createElement("div");
-                wrapper.style.cssText = `flex: ${isLongName ? "1 1 100%" : "1 1 calc(50% - 4px)"}; cursor: grab;`;
-                wrapper.setAttribute("data-index", index);
-                wrapper.appendChild(btn);
-                container.appendChild(wrapper);
-            }
-        });
-
-        if (typeof Sortable !== 'undefined') {
-            Sortable.create(container, {
-                animation: 150,
-                delay: 400,
-                delayOnTouchOnly: true,
-                touchStartThreshold: 5,
-                onEnd: function (evt) {
-                    const newOrder = [];
-                    container.querySelectorAll('[data-index]').forEach(el => {
-                        const originalIndex = parseInt(el.getAttribute('data-index'));
-                        newOrder.push(farmItemsDB[groupId][originalIndex]);
-                    });
-                    farmItemsDB[groupId] = newOrder;
-                    localStorage.setItem('farmItemsDB', JSON.stringify(farmItemsDB));
-                    renderButtons(filter);
-                }
-            });
-        }
-    }
-}
-
-function refreshSingleItemPrice(groupId, index) {
-    const item = farmItemsDB[groupId][index];
-    let foundNewPrice = false;
-
-    for (let key in marketPricesDB) {
-        if (item.name.includes(key)) {
-            item.marketPrice = marketPricesDB[key].marketPrice;
-            item.unit = marketPricesDB[key].unit;
-            foundNewPrice = true;
-            break;
-        }
-    }
-
-    localStorage.setItem('farmItemsDB', JSON.stringify(farmItemsDB));
-    renderButtons();
-    
-    if (foundNewPrice) {
-        alert(`🔄 อัปเดตราคากลางของ "${item.name}" เป็น ${item.marketPrice} บาท เรียบร้อยแล้ว!`);
-    } else {
-        alert(`ℹ️ ไม่พบราคากลางออนไลน์ใหม่ สามารถแก้ไขราคาเองได้โดยจิ้มค้างที่ชื่อปุ่ม`);
-    }
-}
-
-function openEditItemModal(groupId, index) {
-    const item = farmItemsDB[groupId][index];
-    const newName = prompt(`⚙️ แก้ไขข้อมูลรายการ:`, item.name);
-    if (newName === null) return;
-
-    const newPrice = prompt(`💰 แก้ไขราคากลาง (บาท):`, item.marketPrice || 0);
-    if (newPrice === null) return;
-
-    const newUnit = prompt(`📦 แก้ไขหน่วย (เช่น ตัว, กก., ลูก, อัน):`, item.unit || "หน่วย");
-    if (newUnit === null) return;
-
-    item.name = getSmartEmoji(newName.trim());
-    item.marketPrice = parseFloat(newPrice) || 0;
-    item.unit = newUnit.trim() || "หน่วย";
-
-    localStorage.setItem('farmItemsDB', JSON.stringify(farmItemsDB));
-    renderButtons();
-    updateGroupSelectOptions();
-    alert("✨ บันทึกการแก้ไขเรียบร้อยแล้ว!");
-}
-
-function filterButtons(query) { renderButtons(query); }
-
-function updateGroupSelectOptions() {
-    const select = document.getElementById("groupSelect");
+function renderGroupSelect() {
+    const select = document.getElementById('groupSelect');
     if (!select) return;
-    select.innerHTML = "";
     
-    for (let groupId in farmItemsDB) {
-        const title = groupTitles[groupId] || groupId.replace('-group', '');
-        const option = document.createElement("option");
-        option.value = groupId;
-        option.innerText = `กลุ่ม: ${title}`;
-        select.appendChild(option);
+    const groupNames = {
+        "spices-group": "🌿 กลุ่มเครื่องเทศ & สมุนไพร",
+        "roots-group": "🥕 กลุ่มราก & หัว",
+        "fruits-veg-group": "🥒 กลุ่มผักผล & แตง",
+        "leaves-group": "🥬 กลุ่มผักใบ & ยอด",
+        "fruits-group": "🍋 กลุ่มผลไม้",
+        "mushrooms-group": "🍄 กลุ่มเห็ด",
+        "onions-group": "🧅 กลุ่มหอม & กระเทียม",
+        "pets-group": "🐔 กลุ่มสัตว์เลี้ยง",
+        "consumable-group": "⚙️ กลุ่มวัสดุสิ้นเปลือง"
+    };
+
+    select.innerHTML = '';
+    for (let key in currentFarmData) {
+        let opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = groupNames[key] || key;
+        select.appendChild(opt);
     }
-    
-    const newOpt = document.createElement("option");
-    newOpt.value = "new";
-    newOpt.innerText = "-- สร้างกลุ่มใหม่ --";
-    select.appendChild(newOpt);
+
+    let customOpt = document.createElement('option');
+    customOpt.value = 'new_group';
+    customOpt.textContent = '+ สร้างกลุ่มสินค้าใหม่...';
+    select.appendChild(customOpt);
 }
 
-function toggleNewGroupInput(val) { 
-    const groupNameEl = document.getElementById('newGroupName');
-    if (groupNameEl) groupNameEl.style.display = (val === 'new') ? 'block' : 'none'; 
+function toggleNewGroupInput(val) {
+    const input = document.getElementById('newGroupName');
+    if (input) {
+        input.style.display = (val === 'new_group') ? 'block' : 'none';
+    }
 }
 
 function toggleCustomUnitInput(val) {
-    const customInput = document.getElementById("customUnitName");
-    if (customInput) customInput.style.display = (val === 'custom') ? 'block' : 'none';
+    const input = document.getElementById('customUnitName');
+    if (input) {
+        input.style.display = (val === 'custom') ? 'block' : 'none';
+    }
 }
 
-function addNewButton() {
-    const rawName = document.getElementById("newItemName").value.trim();
-    const marketPrice = parseFloat(document.getElementById("newItemMarketPrice").value) || 0;
-    let unitVal = document.getElementById("newItemUnit").value;
-    let groupVal = document.getElementById("groupSelect").value;
-
-    if (unitVal === "custom") {
-        unitVal = document.getElementById("customUnitName").value.trim() || "หน่วย";
-    }
-
-    if (!rawName) return alert("กรุณากรอกชื่อรายการ");
-
-    const name = getSmartEmoji(rawName);
-
-    if (groupVal === "new") {
-        const customName = document.getElementById("newGroupName").value.trim();
-        if (!customName) return alert("กรุณาตั้งชื่อกลุ่มใหม่");
-        
-        groupVal = "group-" + Date.now();
-        groupTitles[groupVal] = customName;
-        localStorage.setItem('groupTitles', JSON.stringify(groupTitles));
-        farmItemsDB[groupVal] = [];
-    }
-
-    if(!farmItemsDB[groupVal]) farmItemsDB[groupVal] = [];
-    farmItemsDB[groupVal].push({ name, marketPrice, unit: unitVal });
-    localStorage.setItem('farmItemsDB', JSON.stringify(farmItemsDB));
-    
-    renderGroupContainers();
-    renderButtons();
-    updateGroupSelectOptions();
-    
-    document.getElementById("newItemName").value = "";
-    document.getElementById("newItemMarketPrice").value = "";
-    document.getElementById("customUnitName").value = "";
-    document.getElementById("customUnitName").style.display = "none";
-    document.getElementById("newGroupName").value = "";
-    document.getElementById("newGroupName").style.display = "none";
+function onManualUnitChange(val) {
+    currentSelectedUnit = val;
 }
-
 
 // ==========================================
-// 4. ACCOUNTING & FINANCIAL MANAGEMENT
+// 2. เรนเดอร์รายการสินค้า & ค้นหา
 // ==========================================
-function addEntry(type) {
-    const dateInput = document.getElementById("expenseDate").value;
-    const detail = document.getElementById("expenseDetail").value.trim();
-    const qty = parseFloat(document.getElementById("unitQuantity").value) || 1;
-    const price = parseFloat(document.getElementById("unitPrice").value) || 0;
-    
-    let total = price * qty;
-    if (total === 0) {
-        total = parseFloat(document.getElementById("displayTotal").innerText.replace(/,/g, '')) || 0;
-    }
-    
-    if (!dateInput || !detail || total <= 0) return alert("กรุณากรอกข้อมูลและราคาให้ครบถ้วน");
+function renderGroupsContainer() {
+    const container = document.getElementById('groups-container');
+    if (!container) return;
 
-    let formattedDate = dateInput;
-    if (dateInput.includes('-')) {
-        const parts = dateInput.split('-');
-        formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-    }
+    container.innerHTML = '';
 
-    const detailWithUnit = `${detail} (${qty} ${currentSelectedUnit})`;
+    const groupTitles = {
+        "spices-group": "🌿 เครื่องเทศ & สมุนไพร",
+        "roots-group": "🥕 ราก & หัว",
+        "fruits-veg-group": "🥒 ผักผล & แตง",
+        "leaves-group": "🥬 ผักใบ & ยอด",
+        "fruits-group": "🍋 ผลไม้",
+        "mushrooms-group": "🍄 เห็ด",
+        "onions-group": "🧅 หอม & กระเทียม",
+        "pets-group": "🐔 สัตว์เลี้ยง",
+        "consumable-group": "⚙️ วัสดุสิ้นเปลือง"
+    };
 
-    farmData.push({ 
-        id: Date.now(), 
-        date: formattedDate, 
-        type: type, 
-        detail: detailWithUnit, 
-        amount: total 
-    });
-    
-    localStorage.setItem('farmData', JSON.stringify(farmData));
-    updateTable();
-    
-    document.getElementById("expenseDetail").value = "";
-    document.getElementById("unitPrice").value = "";
-    document.getElementById("unitQuantity").value = "1";
-    document.getElementById("displayTotal").innerText = "0";
-    
-    const compareBox = document.getElementById("priceCompareBox");
-    if (compareBox) compareBox.style.display = "none";
-    updateUnitLabels("หน่วย");
-}
+    for (let groupKey in currentFarmData) {
+        let items = currentFarmData[groupKey];
+        if (!Array.isArray(items)) continue;
 
-function calculateTotal() { 
-    const p = parseFloat(document.getElementById("unitPrice").value) || 0;
-    const q = parseFloat(document.getElementById("unitQuantity").value) || 0;
-    const displayTotal = document.getElementById("displayTotal");
-    if (displayTotal) displayTotal.innerText = (p * q).toLocaleString(); 
-}
+        let filteredItems = items.filter(item => 
+            item.name.toLowerCase().includes(searchKeyword.toLowerCase())
+        );
 
-function updateTable() {
-    const historyBody = document.getElementById("historyBody");
-    if (!historyBody) return;
-    
-    farmData = farmData.map((item, index) => {
-        if (!item.id) item.id = Date.now() + index;
-        return item;
-    });
+        if (searchKeyword && filteredItems.length === 0) continue;
 
-    historyBody.innerHTML = "";
-    let income = 0, expense = 0;
-
-    farmData.forEach(item => {
-        const amount = parseFloat(item.amount) || parseFloat(item.total) || 0;
-        if (item.type === 'รายรับ') income += amount;
-        else if (item.type === 'รายจ่าย') expense += amount;
-    });
-
-    if (document.getElementById("totalIncome")) document.getElementById("totalIncome").innerText = income.toLocaleString();
-    if (document.getElementById("totalExpense")) document.getElementById("totalExpense").innerText = expense.toLocaleString();
-    if (document.getElementById("netBalance")) document.getElementById("netBalance").innerText = (income - expense).toLocaleString();
-    
-    const netBalanceEl = document.getElementById("netBalance");
-    if(netBalanceEl) netBalanceEl.style.color = (income - expense) >= 0 ? "#10b981" : "#ef4444";
-
-    const sortedData = [...farmData].sort((a, b) => b.id - a.id);
-    const displayData = showAllHistory ? sortedData : sortedData.slice(0, 5);
-    
-    const historyCountText = document.getElementById("historyCountText");
-    if (historyCountText) historyCountText.innerText = showAllHistory ? `ทั้งหมด ${sortedData.length} รายการ` : `รายการใหม่`;
-
-    displayData.forEach(item => {
-        const tr = document.createElement("tr");
-        const color = item.type === 'รายรับ' ? '#10b981' : '#ef4444';
-        const sign = item.type === 'รายรับ' ? '+' : '-';
-        const amt = parseFloat(item.amount) || parseFloat(item.total) || 0;
-        
-        tr.style.borderBottom = "1px solid #334155";
-        tr.innerHTML = `
-            <td style="color: #94a3b8; font-size: 12px; padding: 6px 4px;">${item.date}</td>
-            <td style="text-align: left; padding: 6px 4px;">
-                ${item.detail || item.name}<br>
-                <span style="font-size: 10px; color: ${color}; font-weight: bold;">${item.type}</span>
-            </td>
-            <td style="font-weight: bold; color: ${color}; padding: 6px 4px;">${sign}${amt.toLocaleString()}</td>
-            <td style="text-align: center; padding: 6px 4px;">
-                <button onclick="deleteEntry(${item.id})" style="padding: 2px 5px; font-size: 10px; border-radius: 4px; background: transparent; border: 1px solid #ef4444; color: #ef4444; cursor: pointer;">✖</button>
-            </td>
+        let groupDiv = document.createElement('div');
+        groupDiv.style.marginBottom = '14px';
+        groupDiv.innerHTML = `
+            <div style="font-size: 13px; font-weight: bold; color: var(--accent-color); margin-bottom: 6px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
+                ${groupTitles[groupKey] || groupKey}
+            </div>
+            <div class="item-grid-${groupKey}" style="display: flex; flex-wrap: wrap; gap: 6px;" id="grid-${groupKey}"></div>
         `;
-        historyBody.appendChild(tr);
-    });
-}
 
-function toggleHistoryLimit() {
-    showAllHistory = !showAllHistory;
-    const btn = document.getElementById("toggleHistoryBtn");
-    if (btn) btn.innerText = showAllHistory ? "ดูแค่ 5 รายการล่าสุด 📝" : "ดูประวัติทั้งหมด 📝";
-    updateTable();
-}
+        container.appendChild(groupDiv);
 
-function deleteEntry(id) { 
-    if (confirm("ต้องการลบประวัติรายการนี้ใช่หรือไม่?")) {
-        farmData = farmData.filter(item => item.id !== id);
-        localStorage.setItem('farmData', JSON.stringify(farmData)); 
-        updateTable(); 
-    }
-}
+        let grid = groupDiv.querySelector(`#grid-${groupKey}`);
+        filteredItems.forEach((item) => {
+            let btn = document.createElement('button');
+            btn.type = 'button';
+            btn.style.cssText = 'background: var(--item-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 8px 10px; border-radius: 8px; font-size: 12px; cursor: pointer; text-align: left; flex: 1 1 calc(50% - 6px); display: flex; justify-content: space-between; align-items: center; transition: 0.2s;';
+            btn.innerHTML = `<span>${item.name}</span> <span style="color: var(--accent-color); font-size: 11px;">${item.marketPrice || 0}฿/${item.unit || 'หน่วย'}</span>`;
+            
+            btn.onclick = () => selectItemForExpense(item);
+            grid.appendChild(btn);
+        });
 
-function clearAllData() { 
-    if (confirm("⚠️ อันตราย: คุณแน่ใจหรือไม่ว่าต้องการล้างประวัติบัญชีทั้งหมด?")) { 
-        farmData = [];
-        localStorage.removeItem('farmData');
-        updateTable();
-        alert("ล้างข้อมูลบัญชีเรียบร้อยแล้ว"); 
-    } 
-}
-
-
-// ==========================================
-// 5. SEARCH, KNOWLEDGE & AI HELPERS
-// ==========================================
-function onTypeDebounce(inputElement) {
-    clearTimeout(typingTimer);
-    typingTimer = setTimeout(() => {
-        const query = inputElement.value.trim();
-        if (query.length >= 1) handleRealtimeSearch(query);
-    }, DEBOUNCE_DELAY);
-}
-
-function handleRealtimeSearch(query) {
-    const cleanName = query.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
-    let matchedData = null;
-    for (let key in marketPricesDB) {
-        if (cleanName.includes(key)) {
-            matchedData = marketPricesDB[key];
-            break;
+        if (typeof Sortable !== 'undefined' && grid) {
+            Sortable.create(grid, {
+                animation: 150,
+                ghostClass: 'sortable-ghost'
+            });
         }
     }
-
-    const currentMarketPrice = matchedData ? matchedData.marketPrice : 0;
-    const matchedUnit = matchedData ? matchedData.unit : "หน่วย";
-    
-    currentSelectedUnit = matchedUnit;
-    updateUnitLabels(matchedUnit);
-    displayPriceComparison(query, currentMarketPrice, matchedUnit);
-    fetchGoogleKnowledgeData(cleanName, query);
 }
 
-function displayPriceComparison(itemName, marketPrice, unit) {
-    const compareBox = document.getElementById("priceCompareBox");
-    if (!compareBox) return;
-
-    if (document.getElementById("marketPriceDisplay")) document.getElementById("marketPriceDisplay").innerText = marketPrice || 0;
-    const unitText = unit ? `฿/${unit}` : `฿`;
-    if (document.getElementById("marketPriceUnit")) document.getElementById("marketPriceUnit").innerText = unitText;
-
-    if (marketPrice > 0) {
-        compareBox.style.display = "flex";
-    } else {
-        compareBox.style.display = "none";
-    }
+function filterButtons(keyword) {
+    searchKeyword = keyword.trim();
+    renderGroupsContainer();
 }
 
+// ==========================================
+// 3. เพิ่มสินค้าใหม่ พร้อมระบบเติมอีโมจิอัจฉริยะ
+// ==========================================
 function getSmartEmoji(text) {
     const hasEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu.test(text); 
     if (hasEmoji) return text;
@@ -695,49 +182,243 @@ function getSmartEmoji(text) {
     return text;
 }
 
-async function fetchGoogleKnowledgeData(cleanItemName, rawItemName) {
-    if (!rawItemName) return;
-    const pureSearchName = rawItemName.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '').trim();
+function addNewButton() {
+    const nameInput = document.getElementById('newItemName');
+    const priceInput = document.getElementById('newItemMarketPrice');
+    const groupSelect = document.getElementById('groupSelect');
+    const newGroupNameInput = document.getElementById('newGroupName');
+    const unitSelect = document.getElementById('newItemUnit');
+    const customUnitInput = document.getElementById('customUnitName');
 
-    let aiSummaryText = "";
-    let foundAI = false;
+    if (!nameInput || !priceInput || !groupSelect) return;
+
+    let rawName = nameInput.value.trim();
+    let price = parseFloat(priceInput.value) || 0;
+    let targetGroup = groupSelect.value;
+    let unit = unitSelect.value === 'custom' ? (customUnitInput ? customUnitInput.value.trim() || 'หน่วย' : 'หน่วย') : unitSelect.value;
+
+    if (!rawName) {
+        alert('กรุณากรอกชื่อสินค้า');
+        return;
+    }
+
+    let name = getSmartEmoji(rawName);
+
+    if (targetGroup === 'new_group') {
+        let newKeyName = newGroupNameInput ? newGroupNameInput.value.trim() : '';
+        if (!newKeyName) {
+            alert('กรุณาตั้งชื่อกลุ่มสินค้าใหม่');
+            return;
+        }
+        targetGroup = 'group_' + Date.now();
+        currentFarmData[targetGroup] = [];
+    }
+
+    if (!currentFarmData[targetGroup]) {
+        currentFarmData[targetGroup] = [];
+    }
+
+    currentFarmData[targetGroup].push({ name, marketPrice: price, unit });
     
-    if (typeof smartAISummaries !== 'undefined') {
-        for (let key in smartAISummaries) {
-            if (pureSearchName.includes(key)) {
-                aiSummaryText = smartAISummaries[key];
-                foundAI = true;
+    localStorage.setItem('farmDataStorage', JSON.stringify(currentFarmData));
+
+    nameInput.value = '';
+    priceInput.value = '';
+    if (customUnitInput) customUnitInput.value = '';
+
+    renderGroupSelect();
+    renderGroupsContainer();
+    alert('✨ เพิ่มสินค้าใหม่สำเร็จ!');
+}
+
+// ==========================================
+// 4. บันทึกบัญชี & คำนวณอัตโนมัติ (รวม Debounce)
+// ==========================================
+function selectItemForExpense(item) {
+    const detailInput = document.getElementById('expenseDetail');
+    const unitPriceInput = document.getElementById('unitPrice');
+    const unitSelect = document.getElementById('dynamicUnitSelect');
+    
+    if (detailInput) detailInput.value = item.name;
+    if (unitPriceInput) unitPriceInput.value = item.marketPrice || 0;
+    if (unitSelect) unitSelect.value = item.unit || 'หน่วย';
+    currentSelectedUnit = item.unit || 'หน่วย';
+
+    displayPriceComparison(item.name, item.marketPrice || 0, item.unit);
+    calculateTotal();
+}
+
+function onTypeDebounce(el) {
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
+        const query = el.value.trim().toLowerCase();
+        if (!query) {
+            document.getElementById('priceCompareBox').style.display = 'none';
+            return;
+        }
+
+        let foundItem = null;
+        for (let group in currentFarmData) {
+            let match = currentFarmData[group].find(i => i.name.toLowerCase().includes(query));
+            if (match) {
+                foundItem = match;
                 break;
             }
         }
+
+        if (foundItem) {
+            displayPriceComparison(foundItem.name, foundItem.marketPrice, foundItem.unit);
+        } else {
+            // ค้นหาในราคากลางตั้งต้นถ้าไม่มีในกลุ่ม
+            for (let key in marketPricesDB) {
+                if (query.includes(key)) {
+                    displayPriceComparison(key, marketPricesDB[key].marketPrice, marketPricesDB[key].unit);
+                    break;
+                }
+            }
+        }
+    }, DEBOUNCE_DELAY);
+}
+
+function displayPriceComparison(itemName, marketPrice, unit) {
+    const compareBox = document.getElementById('priceCompareBox');
+    const priceDisplay = document.getElementById('marketPriceDisplay');
+    const unitDisplay = document.getElementById('marketPriceUnit');
+
+    if (compareBox && priceDisplay) {
+        compareBox.style.display = 'flex';
+        priceDisplay.textContent = marketPrice;
+        if (unitDisplay) unitDisplay.textContent = `฿/${unit || 'หน่วย'}`;
+    }
+}
+
+function calculateTotal() {
+    const price = parseFloat(document.getElementById('unitPrice').value) || 0;
+    const qty = parseFloat(document.getElementById('unitQuantity').value) || 0;
+    const total = price * qty;
+
+    const displayTotal = document.getElementById('displayTotal');
+    if (displayTotal) displayTotal.textContent = total.toLocaleString();
+}
+
+function addEntry(type) {
+    const date = document.getElementById('expenseDate').value;
+    const detail = document.getElementById('expenseDetail').value.trim();
+    const price = parseFloat(document.getElementById('unitPrice').value) || 0;
+    const qty = parseFloat(document.getElementById('unitQuantity').value) || 1;
+    const unitSelect = document.getElementById('dynamicUnitSelect');
+    const unit = unitSelect ? unitSelect.value : currentSelectedUnit;
+    const amount = price * qty;
+
+    if (!date || !detail || amount <= 0) {
+        alert('กรุณากรอกวันที่ รายการ และจำนวนเงินให้ถูกต้อง');
+        return;
     }
 
-    const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(`การดูแลรักษา วิธีนำไปใช้งาน ${pureSearchName}`)}`;
+    const newEntry = {
+        id: Date.now(),
+        date,
+        detail: `${detail} (${qty} ${unit})`,
+        amount,
+        type
+    };
 
-    showInlineKnowledge(`💡 ข้อมูล: ${pureSearchName}`, `
-        <div style="background: #0f172a; border-radius: 10px; padding: 10px; margin-bottom: 10px; border: 1px solid #334155; color: #f8fafc;">
-            <div style="color: #60a5fa; font-weight: bold; margin-bottom: 6px; font-size: 13px;">✨ ข้อมูลภาพรวมโดย AI</div>
-            <div id="wiki-summary-content" style="color: #cbd5e1; font-size: 11px; line-height: 1.4;">
-                ${foundAI ? aiSummaryText : 'ไม่พบข้อมูล AI เฉพาะ กรุณาค้นหาเพิ่มเติม'}
-            </div>
-        </div>
-        <a href="${googleSearchUrl}" target="_blank" style="display: block; text-align: center; text-decoration: none; padding: 8px; background: #1e293b; color: #60a5fa; border: 1px solid #475569; border-radius: 8px; font-weight: bold; font-size: 12px;">
-            🔍 ค้นหาบน Google เพิ่มเติม
-        </a>
-    `);
-}
+    expenseHistory.unshift(newEntry);
+    localStorage.setItem('lamay_expenseHistory', JSON.stringify(expenseHistory));
 
-function showInlineKnowledge(title, htmlContent) {
-    const box = document.getElementById('inline-knowledge-box');
-    if (!box) return;
-    document.getElementById('knowledge-title').textContent = title;
-    document.getElementById('knowledge-content').innerHTML = htmlContent;
-    box.style.display = 'block';
+    document.getElementById('expenseDetail').value = '';
+    document.getElementById('unitPrice').value = '';
+    document.getElementById('unitQuantity').value = '1';
     
-    box.parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const compareBox = document.getElementById('priceCompareBox');
+    if (compareBox) compareBox.style.display = 'none';
+
+    updateAccountingSummary();
+    renderHistoryTable();
 }
 
-function closeInlineKnowledge() {
-    const box = document.getElementById('inline-knowledge-box');
-    if (box) box.style.display = 'none';
+// ==========================================
+// 5. สรุปยอดบัญชี & ประวัติ
+// ==========================================
+function updateAccountingSummary() {
+    let totalIncome = 0;
+    let totalExpense = 0;
+
+    expenseHistory.forEach(item => {
+        if (item.type === 'รายรับ') {
+            totalIncome += item.amount;
+        } else {
+            totalExpense += item.amount;
+        }
+    });
+
+    let net = totalIncome - totalExpense;
+
+    const incEl = document.getElementById('totalIncome');
+    const expEl = document.getElementById('totalExpense');
+    const netEl = document.getElementById('netBalance');
+
+    if (incEl) incEl.textContent = totalIncome.toLocaleString();
+    if (expEl) expEl.textContent = totalExpense.toLocaleString();
+    if (netEl) {
+        netEl.textContent = net.toLocaleString();
+        netEl.style.color = net >= 0 ? '#10b981' : '#ef4444';
+    }
+}
+
+function renderHistoryTable() {
+    const tbody = document.getElementById('historyBody');
+    const countText = document.getElementById('historyCountText');
+    const toggleBtn = document.getElementById('toggleHistoryBtn');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    let displayList = showAllHistory ? expenseHistory : expenseHistory.slice(0, 5);
+
+    if (countText) countText.textContent = showAllHistory ? `ประวัติทั้งหมด (${expenseHistory.length} รายการ)` : `รายการล่าสุด (แสดง 5 จาก ${expenseHistory.length})`;
+    if (toggleBtn) toggleBtn.textContent = showAllHistory ? 'ซ่อนประวัติ 📜' : 'ดูประวัติทั้งหมด 📝';
+
+    if (displayList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted, #94a3b8); padding: 12px;">ยังไม่มีประวัติการทำรายการ</td></tr>`;
+        return;
+    }
+
+    displayList.forEach(item => {
+        let tr = document.createElement('tr');
+        let colorStyle = item.type === 'รายรับ' ? 'color: #10b981;' : 'color: #ef4444;';
+        tr.innerHTML = `
+            <td style="padding: 8px; font-size: 12px; border-bottom: 1px solid var(--border-color);">${item.date}</td>
+            <td style="padding: 8px; font-size: 12px; border-bottom: 1px solid var(--border-color);">${item.detail}</td>
+            <td style="padding: 8px; font-size: 12px; border-bottom: 1px solid var(--border-color); ${colorStyle} font-weight: bold;">${item.type === 'รายรับ' ? '+' : '-'}${item.amount.toLocaleString()} ฿</td>
+            <td style="padding: 8px; font-size: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
+                <button onclick="deleteEntry(${item.id})" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 2px 6px; font-size: 12px; width: auto; margin: 0;">🗑️</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function toggleHistoryLimit() {
+    showAllHistory = !showAllHistory;
+    renderHistoryTable();
+}
+
+function deleteEntry(id) {
+    if (confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')) {
+        expenseHistory = expenseHistory.filter(item => item.id !== id);
+        localStorage.setItem('lamay_expenseHistory', JSON.stringify(expenseHistory));
+        updateAccountingSummary();
+        renderHistoryTable();
+    }
+}
+
+function clearAllData() {
+    if (confirm('⚠️ คำเตือน: คุณต้องการล้างประวัติบัญชีทั้งหมดจริงหรือ? ข้อมูลจะถูกลบออกทั้งหมด')) {
+        expenseHistory = [];
+        localStorage.removeItem('lamay_expenseHistory');
+        updateAccountingSummary();
+        renderHistoryTable();
+        alert('ล้างประวัติเรียบร้อยแล้ว');
+    }
 }
