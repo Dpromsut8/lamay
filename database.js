@@ -249,7 +249,7 @@ export { farmDataStorage, smartMarketData, saveFarmDataStorage };
         {name: "🥩 เซี่ยงจี้หมู", marketPrice: 60, unit: "กก."},
         {name: "🫘 เมล็ดกระถิน (แบบแกะแล้ว) 500 กรัม", marketPrice: 130, unit: "แพ็ค"}
     ]
-};
+;
 
 // ข้อมูล AI อ้างอิงเพื่อการค้นหาและการอัปเดตราคา
 const smartMarketData = {};
