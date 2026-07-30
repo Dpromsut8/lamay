@@ -28,9 +28,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm' # เพิ่มการแคช npm เพื่อความเร็วในการรันซ้ำ
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci # ใช้ npm ci เหมาะสำหรับ CI/CD
 
       - name: Build Web
         run: npm run build
@@ -41,7 +42,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'   # เปลี่ยนให้ชี้มาที่โฟลเดอร์ dist ที่ถูก build แล้ว
+          path: './dist'   # ตรวจสอบว่าตรงกับโฟลเดอร์ผลลัพธ์หลัง build ของโปรเจกต์จริง
           
       - name: Deploy to GitHub Pages
         id: deployment
