@@ -420,35 +420,32 @@
                 <button onclick="switchTab('menu')" id="tab-btn-menu" class="tab-btn active">🌱 จัดการผลผลิต</button>
                 <button onclick="switchTab('account')" id="tab-btn-account" class="tab-btn">💰 บัญชีฟาร์ม</button>
             </div>
-
-            <!-- ส่วนจัดการผลผลิต (Menu Panel) -->
-            <section id="menu-panel" class="card">
+ <main class="dashboard-grid">
+            <section class="menu-panel">
                 <h3>หน่วยจัดการผลผลิต</h3>
+                <div id="groups-container">
+                    <h4>สัตว์เลี้ยง</h4>
+                    <div id="pets-group" class="btn-group"></div>
+                    <h4>พืชสวน</h4>
+                    <div id="plants-group" class="btn-group"></div>
+                    <h4>วัสดุสิ้นเปลือง</h4>
+                    <div id="consumable-group" class="btn-group"></div>
+                </div>
                 
-                <!-- ช่องค้นหา -->
-                <input type="text" id="searchFilter" placeholder="🔍 ค้นหารายการสินค้า/วัตถุดิบ..." oninput="filterButtons(this.value)">
-                
-                <!-- พื้นที่แสดงกลุ่มสินค้า -->
-                <div id="groups-container"></div>
-                
-                <!-- ส่วนเพิ่มรายการสินค้าใหม่ -->
-                <div class="card" style="background: var(--item-bg); margin-top: 15px; border: 1px dashed var(--border-color);">
-                    <h4 style="margin-top: 0; color: var(--accent-color);">➕ เพิ่มรายการสินค้าใหม่</h4>
-                    
-                    <label>ชื่อสินค้าใหม่</label>
-                    <input type="text" id="newItemName" placeholder="เช่น 🍋 มะนาวแป้น" oninput="autoSuggest()">
-
-                    <label>ราคากลาง / ราคาต่อหน่วย (บาท)</label>
-                    <input type="number" id="newItemMarketPrice" placeholder="0">
-                    
-                    <label>เลือกกลุ่มสินค้า</label>
+                <div class="editor-box">
+                    <h4>⚙️ จัดการรายการสินค้า</h4>
+                    <input type="text" id="newItemName" placeholder="ชื่อรายการ">
+                    <input type="number" id="newItemPrice" placeholder="ราคา">
                     <select id="groupSelect" onchange="toggleNewGroupInput(this.value)">
                         <option value="pets-group">กลุ่ม: สัตว์เลี้ยง</option>
                         <option value="plants-group">กลุ่ม: พืชสวน</option>
                         <option value="consumable-group">กลุ่ม: วัสดุสิ้นเปลือง</option>
                         <option value="new">-- สร้างกลุ่มใหม่ --</option>
                     </select>
-                    <input type="text" id="newGroupName" placeholder="ตั้งชื่อกลุ่มใหม่..." style="display: none;">
+                    <input type="text" id="newGroupName" placeholder="ชื่อกลุ่มใหม่" style="display: none;">
+                    <button onclick="addNewButton()">➕ เพิ่มปุ่มรายการ</button>
+                </div>
+                        </section>
 
                     <label>หน่วยสินค้า</label>
                     <select id="newItemUnit" onchange="toggleCustomUnitInput(this.value)">
