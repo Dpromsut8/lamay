@@ -1,11 +1,14 @@
 name: Build Android APK
+
 on:
   push:
     branches:
       - main
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -14,15 +17,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+          cache: 'npm' # ช่วยแคช npm dependencies
           
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
+          cache: 'gradle' # ช่วยแคช Gradle dependencies
           
       - name: Install Dependencies
-        run: npm install
+        run: npm ci # แนะนำใช้ npm ci สำหรับ CI/CD เพราะจะแม่นยำและเร็วกว่า npm install
         
       - name: Build Web Assets
         run: npm run build
@@ -33,6 +38,10 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
         
+      - name: Grant execute permission for Gradlew
+        working-directory: ./android
+        run: chmod +x gradlew
+        
       - name: Build APK
         working-directory: ./android
         run: ./gradlew assembleDebug
@@ -40,5 +49,5 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LAMAY.apk
+          name: LAMAY-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
