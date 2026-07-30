@@ -530,8 +530,9 @@ class LamayApp {
     closeDrawer() {
         const drawer = document.getElementById('knowledge-drawer');
         if (drawer) drawer.style.display = 'none';
-    }
-
+    }function openAIDrawer() { app.openAIDrawer(); }
+function closeDrawer() { app.closeDrawer(); }
+    
     // ------------------------------------------------------------------------
     // 10. BIND GLOBAL EVENTS & AUTO-FILL ENTER
     // ------------------------------------------------------------------------
@@ -540,7 +541,10 @@ class LamayApp {
         const groupSelect = document.getElementById('groupSelect');
         if (groupSelect) {
             groupSelect.onchange = (e) => {
-                document.getElementById('newGroupName').style.display = e.target.value === 'new' ? 'block' : 'none';
+                const newGroupInput = document.getElementById('newGroupName');
+                if (newGroupInput) {
+                    newGroupInput.style.display = e.target.value === 'new' ? 'block' : 'none';
+                }
             };
         }
 
@@ -548,11 +552,14 @@ class LamayApp {
         const unitSelect = document.getElementById('newItemUnit');
         if (unitSelect) {
             unitSelect.onchange = (e) => {
-                document.getElementById('customUnitName').style.display = e.target.value === 'custom' ? 'block' : 'none';
+                const customUnitInput = document.getElementById('customUnitName');
+                if (customUnitInput) {
+                    customUnitInput.style.display = e.target.value === 'custom' ? 'block' : 'none';
+                }
             };
         }
 
-        // ดักจับการกด Enter ในช่องชื่อรายการ เพื่อ Auto-fill ข้อมูลจาก database.js
+        // ดักจับการกด Enter ในช่องชื่อรายการ เพื่อ Auto-fill ข้อมูลสินค้าอัตโนมัติ
         const itemNameInput = document.getElementById('expenseDetail'); 
         const itemPriceInput = document.getElementById('unitPrice');      
         const itemGroupSelect = document.getElementById('groupSelect');   
@@ -561,38 +568,58 @@ class LamayApp {
         if (itemNameInput) {
             itemNameInput.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter') {
-                    event.preventDefault(); 
+                    event.preventDefault(); // ป้องกันไม่ให้ฟอร์ม submit หรือรีหน้าเว็บ
                     
-                    let queryName = itemNameInput.value.trim();
+                    let queryName = itemNameInput.value.trim().toLowerCase();
                     
-                    if (smartMarketData && smartMarketData[queryName]) {
-                        let itemInfo = smartMarketData[queryName];
-                        
+                    if (!queryName) return;
+
+                    // 1. ค้นหาจากรายการผลิตภัณฑ์ในระบบ (this.products) แบบตรงตัว
+                    let match = this.products.find(p => p.name.toLowerCase() === queryName);
+                    
+                    // 2. ถ้ายังไม่เจอ ลองหาแบบมีคำหรือคีย์เวิร์ดใกล้เคียง (.includes)
+                    if (!match) {
+                        match = this.products.find(p => p.name.toLowerCase().includes(queryName));
+                    }
+                    
+                    if (match) {
+                        // เติมราคาอัตโนมัติ
                         if (itemPriceInput) {
-                            itemPriceInput.value = itemInfo.marketPrice;
-                            this.calculateTotal(); 
+                            itemPriceInput.value = match.price;
+                            this.calculateTotal(); // คำนวณราคารวมใหม่ทันที
                         }
                         
+                        // เติมหน่วยอัตโนมัติ (หากไม่มีในตัวเลือกให้เพิ่มเข้าไปใหม่)
                         if (itemUnitInput) {
-                            if (!Array.from(itemUnitInput.options).some(opt => opt.value === itemInfo.unit)) {
-                                itemUnitInput.add(new Option(itemInfo.unit, itemInfo.unit));
+                            if (!Array.from(itemUnitInput.options).some(opt => opt.value === match.unit)) {
+                                itemUnitInput.add(new Option(match.unit, match.unit));
                             }
-                            itemUnitInput.value = itemInfo.unit;
+                            itemUnitInput.value = match.unit;
                         }
                         
-                        if (itemGroupSelect) {
-                            itemGroupSelect.value = itemInfo.group;
+                        // เติมกลุ่มสินค้าอัตโนมัติ
+                        if (itemGroupSelect && match.group) {
+                            itemGroupSelect.value = match.group;
                         }
                         
-                        console.log("ดึงข้อมูลอัตโนมัติสำเร็จสำหรับ:", queryName);
+                        // เอฟเฟกต์เรืองแสงสีเขียวแจ้งเตือนว่าดึงข้อมูลสำเร็จ
+                        itemNameInput.style.transition = 'background-color 0.3s ease, border 0.3s ease';
+                        itemNameInput.style.backgroundColor = 'rgba(16, 185, 129, 0.25)';
+                        itemNameInput.style.border = '1px solid #10b981';
+
+                        setTimeout(() => {
+                            itemNameInput.style.backgroundColor = 'var(--bg-color)';
+                            itemNameInput.style.border = '1px solid var(--border-color)';
+                        }, 600);
+                        
+                        console.log("Auto-fill สำเร็จสำหรับ:", match.name);
                     } else {
-                        console.log("ไม่พบข้อมูลสินค้าอ้างอิงในระบบ สามารถกรอกเพิ่มเองได้เลย");
+                        console.log("ไม่พบสินค้าในระบบ สามารถกรอกเพิ่มเองได้เลย");
                     }
                 }
             });
         }
     }
-}
 
 // Global Application Instance
 const app = new LamayApp();
