@@ -1,176 +1,178 @@
 import React, { useState, useEffect } from 'react';
-import Login from './components/Login';
-import FarmMap from './components/FarmMap';
-import Inventory from './components/Inventory';
-import Accounting from './components/Accounting';
-import AIDoctor from './components/AIDoctor';
-import { takeSnapshot } from './utils/nativeCamera';
-import './Style.css';
-
-// ฐานข้อมูลราคากลางและอีโมจิอัตโนมัติ (รวมครบทุกรายการจากเวอร์ชันเดิม)
-const marketPricesDB = {
-    "มะกรูด": { marketPrice: 20, emoji: "🌿", unit: "ลูก" },
-    "มะนาว": { marketPrice: 4, emoji: "🍋", unit: "ลูก" },
-    "มะละกอ": { marketPrice: 25, emoji: "🥭", unit: "ลูก" },
-    "ทุเรียน": { marketPrice: 180, emoji: "🌳", unit: "กก." },
-    "เห็ด": { marketPrice: 15, emoji: "🍄", unit: "กก." },
-    "ชะอม": { marketPrice: 20, emoji: "🌿", unit: "กำ" },
-    "ไก่": { marketPrice: 240, emoji: "🐔", unit: "ตัว" },
-    "ปลา": { marketPrice: 8, emoji: "🐟", unit: "ตัว" },
-    "ไข่": { marketPrice: 130, emoji: "🥚", unit: "แผง" },
-    "อาหาร": { marketPrice: 460, emoji: "🌾", unit: "กระสอบ" },
-    "น้ำมัน": { marketPrice: 33, emoji: "🛢️", unit: "ถุง" },
-    "สายไฟ": { marketPrice: 680, emoji: "⚡", unit: "ม้วน" },
-    "ปั๊มน้ำ": { marketPrice: 2590, emoji: "⚙️", unit: "ตัว" }
-};
-
-const initialFarmData = {
-    "spices-group": [
-        { name: "🌿 ชะอม", marketPrice: 20, unit: "กำ" },
-        { name: "🌿 มะกรูด", marketPrice: 20, unit: "ลูก" }
-    ],
-    "pets-group": [
-        { name: "🐔 ไก่ไข่", marketPrice: 240, unit: "ตัว" }
-    ]
-};
+import { dbService } from './services/database';
 
 export default function App() {
-  const [user, setUser] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('ชะอม');
-  const [farmBanner, setFarmBanner] = useState("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80");
-  
-  // State ข้อมูลฟาร์มและบัญชี ซิงค์กับ LocalStorage
-  const [farmData, setFarmData] = useState(() => {
-    const saved = localStorage.getItem('lamay_farmData');
-    return saved ? JSON.parse(saved) : initialFarmData;
-  });
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [products, setProducts] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [expenseHistory, setExpenseHistory] = useState(() => {
-    const saved = localStorage.getItem('lamay_expenseHistory');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // State กล่อง AI แนะนำข้อมูลพืช (อัปเดตอัตโนมัติตามคำค้นหา)
-  const [aiBoxData, setAiBoxData] = useState({
-    visible: true,
-    title: '💡 ข้อมูล: ชะอม',
-    content: 'ชะอมเป็นพืชผักสวนครัวที่ปลูกง่าย แตกยอดไว ชอบแดดจัดและน้ำปานกลาง แนะนำให้รดน้ำสม่ำเสมอ ตัดแต่งกิ่งบ่อยๆ เพื่อให้แตกยอดอ่อนสำหรับเก็บเกี่ยว'
-  });
-
-  // บันทึกข้อมูลลง localStorage อัตโนมัติเมื่อมีการเปลี่ยนแปลง
+  // โหลดข้อมูลจาก IndexedDB เมื่อเปิดหน้าแอป
   useEffect(() => {
-    localStorage.setItem('lamay_farmData', JSON.stringify(farmData));
-  }, [farmData]);
+    loadAllData();
+  }, []);
 
-  useEffect(() => {
-    localStorage.setItem('lamay_expenseHistory', JSON.stringify(expenseHistory));
-  }, [expenseHistory]);
-
-  // ระบบประมวลผล AI อัจฉริยะ ค้นหาจากฐานข้อมูลราคากลางตามพิมพ์คำค้น
-  useEffect(() => {
-    const query = searchQuery.trim();
-    if (!query) return;
-
-    let foundKey = Object.keys(marketPricesDB).find(k => query.includes(k));
-    if (foundKey) {
-        setAiBoxData({
-            visible: true,
-            title: `💡 ข้อมูล: ${foundKey}`,
-            content: `ราคากลางอ้างอิง: ${marketPricesDB[foundKey].marketPrice} บาท/${marketPricesDB[foundKey].unit} เหมาะสำหรับการวางแผนปลูกและบริหารจัดการภายในละม้ายฟาร์ม`
-        });
-    } else {
-        setAiBoxData({
-            visible: true,
-            title: `💡 ข้อมูล: ${query}`,
-            content: `คำแนะนำทั่วไปสำหรับ "${query}": ตรวจสอบความชื้น ดิน และระบบน้ำให้เหมาะสม เพื่อผลผลิตที่ดีเยี่ยมในโคกหนองนา`
-        });
-    }
-  }, [searchQuery]);
-
-  // ระบบถ่ายรูปอัปเดตฟาร์มรองรับทุกแพลตฟอร์ม (Capacitor & Web)
-  const handleCaptureBanner = async () => {
+  const loadAllData = async () => {
+    setLoading(true);
     try {
-      const photoUrl = await takeSnapshot();
-      if (photoUrl) {
-        setFarmBanner(photoUrl);
-        alert("✨ อัปเดตรูปภาพบรรยากาศฟาร์มสำเร็จ!");
-      }
-    } catch (error) {
-      console.error("Camera error:", error);
-      alert("❌ ไม่สามารถเปิดใช้งานกล้องได้");
+      const pList = await dbService.getProducts();
+      const tList = await dbService.getTransactions();
+      setProducts(pList);
+      setTransactions(tList);
+    } catch (err) {
+      console.error('Error loading data:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!user) {
-    return <Login onLoginSuccess={(userData) => setUser(userData)} />;
-  }
+  // คำนวณสรุปตัวเลขทางการเงิน
+  const totalIncome = transactions
+    .filter((t) => t.type === 'income')
+    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+
+  const totalExpense = transactions
+    .filter((t) => t.type === 'expense')
+    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+
+  const netBalance = totalIncome - totalExpense;
 
   return (
-    <div className="app-container page">
-      {/* Header bar */}
-      <div className="game-header">
-        <div>
-          <h1>LAMAY - ละม้ายฟาร์ม</h1>
-          <p>ผู้ดูแลระบบ: {user?.name || 'Admin'}</p>
-        </div>
-        <button 
-          className="danger-btn" 
-          onClick={() => setUser(null)} 
-          style={{ width: 'auto', padding: '6px 12px', fontSize: '12px', margin: 0 }}
+    <div style={styles.container}>
+      {/* 🟢 HEADER / NAVIGATION BAR */}
+      <header style={styles.header}>
+        <h1 style={styles.title}>🌾 LAMAY — ละม้ายฟาร์ม</h1>
+        <p style={styles.subtitle}>ระบบจัดการผลผลิตและบัญชีฟาร์ม</p>
+      </header>
+
+      {/* 🔵 MAIN MENU TABS */}
+      <nav style={styles.navTabs}>
+        <button
+          style={{ ...styles.tabBtn, ...(activeTab === 'dashboard' ? styles.activeTab : {}) }}
+          onClick={() => setActiveTab('dashboard')}
         >
-          ออกจากระบบ
+          📊 ภาพรวม
         </button>
-      </div>
+        <button
+          style={{ ...styles.tabBtn, ...(activeTab === 'products' ? styles.activeTab : {}) }}
+          onClick={() => setActiveTab('products')}
+        >
+          📦 ผลผลิต ({products.length})
+        </button>
+        <button
+          style={{ ...styles.tabBtn, ...(activeTab === 'accounting' ? styles.activeTab : {}) }}
+          onClick={() => setActiveTab('accounting')}
+        >
+          💰 บัญชีฟาร์ม ({transactions.length})
+        </button>
+      </nav>
 
-      <div style={{ padding: '16px' }}>
-        {/* Farm Banner & AI Box */}
-        <div className="glass-card" style={{ padding: '10px', textAlign: 'center', marginBottom: '15px' }}>
-          <div className="farm-banner-container">
-            <img src={farmBanner} alt="ละม้ายฟาร์ม" className="farm-banner-img" />
-            
-            <button 
-              type="button" 
-              onClick={handleCaptureBanner} 
-              className="btn-success" 
-              style={{ position: 'absolute', bottom: '10px', right: '10px', width: 'auto', padding: '8px 12px', fontSize: '11px', margin: 0, zIndex: 15 }}
-            >
-              📷 ถ่ายรูปอัปเดตฟาร์ม
-            </button>
-
-            {aiBoxData.visible && (
-              <div className="knowledge-frame" style={{ position: 'absolute', top: '10px', left: '10px', right: '10px', margin: 0, zIndex: 10, textAlign: 'left' }}>
-                <div className="knowledge-header">
-                  <h3>{aiBoxData.title}</h3>
-                  <button className="close-icon-btn" onClick={() => setAiBoxData({ ...aiBoxData, visible: false })}>✕</button>
+      {/* 🟡 CONTENT BODY */}
+      {loading ? (
+        <div style={styles.loading}>กำลังโหลดข้อมูลฐานข้อมูล...</div>
+      ) : (
+        <main style={styles.mainContent}>
+          {/* TAB 1: DASHBOARD (หน้าเมนหลัก) */}
+          {activeTab === 'dashboard' && (
+            <div>
+              <div style={styles.gridCards}>
+                <div style={{ ...styles.card, borderLeft: '5px solid #10B981' }}>
+                  <span style={styles.cardLabel}>รายรับรวม</span>
+                  <h2 style={{ ...styles.cardVal, color: '#10B981' }}>฿{totalIncome.toLocaleString()}</h2>
                 </div>
-                <div className="knowledge-content">
-                  <div style={{ color: '#60a5fa', fontWeight: 'bold', marginBottom: '4px' }}>✨ ข้อมูลภาพรวมโดย AI</div>
-                  {aiBoxData.content}
+
+                <div style={{ ...styles.card, borderLeft: '5px solid #EF4444' }}>
+                  <span style={styles.cardLabel}>รายจ่ายรวม</span>
+                  <h2 style={{ ...styles.cardVal, color: '#EF4444' }}>฿{totalExpense.toLocaleString()}</h2>
+                </div>
+
+                <div style={{ ...styles.card, borderLeft: '5px solid #3B82F6' }}>
+                  <span style={styles.cardLabel}>คงเหลือสุทธิ</span>
+                  <h2 style={{ ...styles.cardVal, color: netBalance >= 0 ? '#3B82F6' : '#EF4444' }}>
+                    ฿{netBalance.toLocaleString()}
+                  </h2>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Global Search Bar */}
-        <div className="glass-card" style={{ padding: '12px', marginBottom: '15px' }}>
-          <p style={{ margin: '0 0 5px 0', fontSize: '13px', color: '#94a3b8' }}>🔍 ค้นหารายการสินค้า/วัตถุดิบ (เชื่อมโยงระบบ AI อัตโนมัติ)</p>
-          <input 
-            type="text" 
-            value={searchQuery} 
-            onChange={(e) => setSearchQuery(e.target.value)} 
-            placeholder="พิมพ์ชื่อพืชผัก หรืออุปกรณ์ฟาร์ม..." 
-          />
-        </div>
+              {/* QUICK ACTIONS */}
+              <div style={styles.actionSection}>
+                <h3>⚡ เมนูด่วน</h3>
+                <div style={styles.btnGroup}>
+                  <button onClick={() => dbService.exportBackupJSON()} style={styles.btnSecondary}>
+                    📤 สำรองข้อมูล (Backup JSON)
+                  </button>
+                  <button onClick={loadAllData} style={styles.btnPrimary}>
+                    🔄 รีเฟรชข้อมูล
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
-        {/* Sub-Components (ส่ง Props ครบถ้วนเพื่อให้ทำงานร่วมกันได้อย่างไร้รอยต่อ) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <FarmMap />
-          <Inventory farmData={farmData} setFarmData={setFarmData} searchQuery={searchQuery} />
-          <Accounting expenseHistory={expenseHistory} setExpenseHistory={setExpenseHistory} farmData={farmData} />
-          <AIDoctor searchQuery={searchQuery} />
-        </div>
-      </div>
+          {/* TAB 2: PRODUCTS CATALOG */}
+          {activeTab === 'products' && (
+            <div>
+              <h3>รายการผลผลิตในฟาร์ม</h3>
+              {products.length === 0 ? (
+                <p style={styles.emptyText}>ยังไม่มีรายการผลผลิต บันทึกเพิ่มได้เลยครับ</p>
+              ) : (
+                <ul style={styles.list}>
+                  {products.map((p) => (
+                    <li key={p.id} style={styles.listItem}>
+                      <strong>{p.name}</strong> — {p.quantity} {p.unit} (฿{p.price})
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: ACCOUNTING */}
+          {activeTab === 'accounting' && (
+            <div>
+              <h3>ประวัติการทำรายการ รายรับ-รายจ่าย</h3>
+              {transactions.length === 0 ? (
+                <p style={styles.emptyText}>ยังไม่มีบันทึกรายรับ-รายจ่าย</p>
+              ) : (
+                <ul style={styles.list}>
+                  {transactions.map((t) => (
+                    <li key={t.id} style={styles.listItem}>
+                      <span>{t.date} — {t.title}</span>
+                      <strong style={{ color: t.type === 'income' ? '#10B981' : '#EF4444' }}>
+                        {t.type === 'income' ? '+' : '-'}฿{Number(t.amount).toLocaleString()}
+                      </strong>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </main>
+      )}
     </div>
   );
 }
+
+// Inline CSS Styling สำหรับตกแต่ง UI ให้สวยสะอาด
+const styles = {
+  container: { maxWidth: '800px', margin: '0 auto', padding: '16px', fontFamily: 'system-ui, sans-serif', color: '#1f2937' },
+  header: { textAlign: 'center', marginBottom: '20px' },
+  title: { margin: '0', color: '#1e3a8a', fontSize: '1.8rem' },
+  subtitle: { margin: '4px 0 0', color: '#6b7280', fontSize: '0.9rem' },
+  navTabs: { display: 'flex', gap: '8px', borderBottom: '2px solid #e5e7eb', marginBottom: '20px' },
+  tabBtn: { flex: 1, padding: '12px', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', color: '#6b7280' },
+  activeTab: { color: '#2563eb', borderBottom: '3px solid #2563eb', background: '#eff6ff' },
+  gridCards: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '24px' },
+  card: { background: '#f9fafb', padding: '16px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' },
+  cardLabel: { fontSize: '0.85rem', color: '#6b7280' },
+  cardVal: { margin: '8px 0 0', fontSize: '1.4rem' },
+  mainContent: { background: '#ffffff', padding: '16px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },
+  actionSection: { marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' },
+  btnGroup: { display: 'flex', gap: '10px' },
+  btnPrimary: { background: '#2563eb', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '6px', cursor: 'pointer' },
+  btnSecondary: { background: '#4b5563', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '6px', cursor: 'pointer' },
+  loading: { textAlign: 'center', padding: '40px', color: '#6b7280' },
+  emptyText: { color: '#9ca3af', fontStyle: 'italic' },
+  list: { listStyle: 'none', padding: 0 },
+  listItem: { display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f3f4f6' }
+};
