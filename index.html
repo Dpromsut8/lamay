@@ -372,7 +372,7 @@
         <div id="knowledge-content" style="line-height: 1.6; font-size: 14px;"></div>
     </div>
 
-    <!-- JavaScript 100% รวมไว้ในไฟล์เดียว -->
+    <!-- JavaScript 100% รวมไว้ในไฟล์เดียว (แก้ไขจุดบั๊ก DOM & SortableJS แล้ว) -->
     <script>
         // --- 1. ระบบจัดการธีมและหน้าจอพื้นฐาน ---
         function applyTimeBasedTheme() {
@@ -463,8 +463,9 @@
         const initialProducts = [
             { id: 1, name: 'ไข่ไก่ (แผง)', price: 120, group: 'สัตว์เลี้ยง', unit: 'แผง' },
             { id: 2, name: 'เห็ดนางฟ้า', price: 60, group: 'พืชสวน', unit: 'กก.' },
-            { id: 3, name: 'อาหารไก่', price: 450, group: 'วัสดุสิ้นเปลือง', unit: 'กระสอบ' },
-            { id: 4, name: 'ค่าไฟ/โซล่าเซลล์', price: 1000, group: 'ค่าใช้จ่ายระบบ', unit: 'หน่วย' }
+            { id: 3, name: 'ชะอม', price: 30, group: 'พืชสวน', unit: 'กำ' },
+            { id: 4, name: 'อาหารไก่', price: 450, group: 'วัสดุสิ้นเปลือง', unit: 'กระสอบ' },
+            { id: 5, name: 'ค่าไฟ/โซล่าเซลล์', price: 1000, group: 'ค่าใช้จ่ายระบบ', unit: 'หน่วย' }
         ];
 
         let products = JSON.parse(localStorage.getItem('lamay_products')) || initialProducts;
@@ -485,23 +486,32 @@
         function toggleNewGroupInput(val) { document.getElementById('newGroupName').style.display = val === 'new' ? 'block' : 'none'; }
         function toggleCustomUnitInput(val) { document.getElementById('customUnitName').style.display = val === 'custom' ? 'block' : 'none'; }
 
+        // ปรับปรุงฟังก์ชัน renderProducts แก้บั๊กปุ่มล่างกดได้ปุ่มเดียว
         function renderProducts() {
             const container = document.getElementById('dynamic-groups-container');
+            if (!container) return;
             container.innerHTML = '';
+            
             const groups = [...new Set(products.map(p => p.group))];
 
             groups.forEach(group => {
-                container.innerHTML += `<h4 class="group-title">${group}</h4>`;
+                const title = document.createElement('h4');
+                title.className = 'group-title';
+                title.textContent = group;
+                container.appendChild(title);
+
                 const groupDiv = document.createElement('div');
                 groupDiv.className = 'btn-group';
                 
                 products.filter(p => p.group === group).forEach(p => {
                     const btn = document.createElement('button');
+                    btn.type = 'button';
                     btn.className = 'farm-item-btn';
                     btn.innerHTML = `<strong>${p.name}</strong><br><small style="color:var(--text-muted)">${p.price}฿ / ${p.unit}</small>`;
                     
                     // Click -> ลงบัญชี
                     btn.onclick = () => selectProductForAccount(p);
+                    
                     // Long press / Right click -> ลบ
                     btn.oncontextmenu = (e) => {
                         e.preventDefault();
@@ -513,11 +523,17 @@
                     };
                     groupDiv.appendChild(btn);
                 });
+                
                 container.appendChild(groupDiv);
 
-                // เปิดใช้ลากวางสลับตำแหน่ง
+                // เปิดใช้ลากวางสลับตำแหน่ง ป้องกันการแย่ง Touch Event บนมือถือ
                 if(typeof Sortable !== 'undefined') {
-                    new Sortable(groupDiv, { animation: 150, group: 'shared' });
+                    new Sortable(groupDiv, {
+                        animation: 150,
+                        group: 'shared',
+                        delay: 150,
+                        delayOnTouchOnly: true
+                    });
                 }
             });
         }
@@ -552,6 +568,18 @@
             
             calculateTotal();
             switchTab('account'); // กระโดดไปแท็บบัญชีถ้าเล่นบนมือถือ
+
+            // เอฟเฟกต์ไฟกะพริบแจ้งเตือนที่ช่องรายการ
+            const detailInput = document.getElementById('expenseDetail');
+            if (detailInput) {
+                detailInput.style.transition = 'background-color 0.3s, border 0.3s';
+                detailInput.style.backgroundColor = 'rgba(16, 185, 129, 0.25)';
+                detailInput.style.border = '1px solid #10b981';
+                setTimeout(() => {
+                    detailInput.style.backgroundColor = 'var(--bg-color)';
+                    detailInput.style.border = '1px solid var(--border-color)';
+                }, 600);
+            }
         }
 
         let debounceTimer;
@@ -614,6 +642,11 @@
             document.getElementById('historyCountText').innerText = showAllHistory ? 'ประวัติทั้งหมด' : 'ประวัติล่าสุด (5 รายการ)';
             document.getElementById('toggleHistoryBtn').innerText = showAllHistory ? 'ย่อกลับ ⬆️' : 'ดูทั้งหมด 📝';
             
+            if (displayList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:15px;">ยังไม่มีรายการบันทึก</td></tr>`;
+                return;
+            }
+
             displayList.forEach(t => {
                 const isIncome = t.type === 'รายรับ';
                 const color = isIncome ? '#059669' : '#dc2626';
