@@ -1,3 +1,4 @@
+import { farmDataStorage, smartMarketData, saveFarmDataStorage } from './database.js';
 /**
  * ============================================================================
  * LAMAY - ละม้ายฟาร์ม & ระบบจัดการบัญชี (Core Application Script)
